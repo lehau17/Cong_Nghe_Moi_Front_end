@@ -57,7 +57,7 @@ const FriendListPage = () => {
                         defaultValue="Tất cả" options={[{ value: "all", label: "Tất cả" }]} className="w-70 text-start" />
         </div>
         <div>
-          {filteredFriends.map((friend, index) => (
+          {filteredFriends.map((friend, _) => (
             <div key={friend.id} className="flex items-center px-4 gap-4 cursor-pointer hover:bg-gray-200    ">
                   <img src={friend.avatar} alt={friend.name} className="w-10 h-10 rounded-full border" />
                   <div className="flex items-center justify-between h-full w-full border-b p-2">

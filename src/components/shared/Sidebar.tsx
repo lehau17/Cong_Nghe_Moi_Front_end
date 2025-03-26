@@ -4,13 +4,14 @@ import { useState } from "react";
 import { FaBriefcase, FaCloud, FaUserFriends } from "react-icons/fa";
 import { HiOutlineClipboardList } from "react-icons/hi";
 import { IoChatbubbleEllipsesSharp, IoSettingsSharp } from "react-icons/io5";
+import { useNavigate } from "react-router-dom";
 import ProfileModal from "./ProfileModal";
 import SettingsModal from "./SettingsModal"; // Import modal cài đặt
 
 const Sidebar = () => {
   const [openProfile, setOpenProfile] = useState(false);
   const [openSettings, setOpenSettings] = useState(false); // Thêm state modal cài đặt
-
+    const navigate = useNavigate()
   return (
     <>
       {/* Sidebar */}
@@ -24,14 +25,19 @@ const Sidebar = () => {
             <h3 className="font-semibold p-2 border-b">Lê Trung Hậu</h3>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => setOpenProfile(true)}>Hồ sơ của bạn</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setOpenSettings(true)}>Cài đặt</DropdownMenuItem> {/* Mở modal cài đặt */}
+            <DropdownMenuItem onClick={() => navigate("/setting")}>Cài đặt</DropdownMenuItem> {/* Mở modal cài đặt */}
             <DropdownMenuItem className="text-red-500">Đăng xuất</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
         {/* Menu Icons */}
         <div className="flex flex-col space-y-6">
-          <IoChatbubbleEllipsesSharp size={24} />
+            <IoChatbubbleEllipsesSharp
+                size={24}
+                onClick={() => navigate("/chat")}
+                className="cursor-pointer"
+            />
+
           <HiOutlineClipboardList size={24} />
           <FaCloud size={24} />
           <FaUserFriends size={24} />
