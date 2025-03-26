@@ -4,6 +4,7 @@ import FriendListPage from "./page/FriendListPage";
 import LoginPage from "./page/LoginPage";
 import ChatTemplate from "./template/Chat";
 import FriendListTemplate from "./template/Friend";
+import SettingTemplate from "./template/Setting";
 
 
 const AppRouter = () => {
@@ -17,6 +18,8 @@ const AppRouter = () => {
               <Route path="/friend-list" element={<FriendListTemplate>
                   <FriendListPage />
               </FriendListTemplate>} />
+              <Route path="/setting" element={<SettingTemplate>
+              </SettingTemplate>} />
 
           </Routes>
 

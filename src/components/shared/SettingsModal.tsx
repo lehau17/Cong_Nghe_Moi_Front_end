@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 interface SettingsModalProps {
   open: boolean;
@@ -8,11 +8,13 @@ interface SettingsModalProps {
 const SettingsModal: React.FC<SettingsModalProps> = ({ open, setOpen }) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Cài đặt</DialogTitle>
-        </DialogHeader>
-        <p>Nội dung cài đặt ở đây...</p>
+      <DialogContent className="w-[800px] h-[500px] max-w-2xl min-w-[700px]">
+              <div className="flex">
+                  <div className="w-40 border-r-1 shadow-r flex flex-col">
+
+                  </div>
+                  <div className="flex-1 "></div>
+        </div>
       </DialogContent>
     </Dialog>
   );
