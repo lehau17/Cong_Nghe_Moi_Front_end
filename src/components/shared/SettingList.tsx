@@ -31,7 +31,7 @@ const SettingList = () => {
             <input
               type="text"
               placeholder="🔍 Tìm kiếm"
-              className="w-full bg-gray-100 px-2 py-2 rounded-lg outline-none"
+              className="w-full bg-gray-100 px-2 py-1 rounded-lg outline-none"
             />
             <FaUserPlus className="text-gray-600 ml-3 cursor-pointer text-xl" />
             <IoMdMore className="text-gray-600 ml-3 cursor-pointer text-xl" />
