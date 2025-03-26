@@ -12,6 +12,9 @@ const AppRouter = () => {
     <BrowserRouter>
       <Routes>
               <Route path="/auth" element={<LoginPage />} />
+              <Route path="/" element={<ChatTemplate>
+                  <ChatWindow />
+              </ChatTemplate>} />
               <Route path="/chat" element={<ChatTemplate>
                   <ChatWindow />
               </ChatTemplate>} />
