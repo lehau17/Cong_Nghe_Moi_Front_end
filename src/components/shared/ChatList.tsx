@@ -35,7 +35,7 @@ const chats = [
 
 const ChatList = () => {
   return (
-    <div className="w-100 bg-white h-screen flex flex-col border-r">
+    <div className="w-90 bg-white h-screen flex flex-col border-r">
       {/* Header */}
       <div className="p-2 flex justify-between items-center border-b">
         <input
@@ -48,7 +48,7 @@ const ChatList = () => {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b px-4 text-gray-600 pt-3">
+      <div className="flex border-b px-4 text-gray-600 pt-3 text-sm">
         <div className="mr-4 font-semibold border-b-2 border-blue-600 pb-2 text-blue-600 ">
           Tất cả
         </div>

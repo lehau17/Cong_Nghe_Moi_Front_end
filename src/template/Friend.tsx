@@ -1,12 +1,12 @@
-import ChatList from "@/components/shared/ChatList";
+import FriendList from "@/components/shared/FriendList";
 import Sidebar from "@/components/shared/Sidebar";
 
-const ChatTemplate = ({ children }: { children: React.ReactNode }) => {
+const FriendListTemplate = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex h-screen w-screen overflow-hidden">
       {/* Sidebar */}
       <Sidebar />
-      <ChatList />
+      <FriendList />
 
       <div className="flex flex-col flex-1 h-screen">
 
@@ -17,4 +17,4 @@ const ChatTemplate = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export default ChatTemplate;
+export default FriendListTemplate;
