@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
+import Header from "./Header";
 
 const messages = [
   { id: 1, sender: "Bạn", text: "Thuật toán in-place : không cần vùng nhớ nào khác" },
@@ -7,15 +8,30 @@ const messages = [
   { id: 3, sender: "Bạn", text: "- Cấu trúc dữ liệu không tuần tự (no linear)" },
   { id: 4, sender: "Bạn", text: "Cấu tạo từ các đỉnh và cạnh" },
   { id: 5, sender: "Bạn", text: "G(V < E)" },
+  { id: 5, sender: "Bạn", text: "G(V < E)" },
+  { id: 5, sender: "Bạn", text: "G(V < E)" },
+  { id: 5, sender: "Bạn", text: "G(V < E)" },
+  { id: 5, sender: "Bạn", text: "G(V < E)" },
+  { id: 5, sender: "Bạn", text: "G(V < E)" },
+  { id: 5, sender: "Bạn", text: "G(V < E)" },
+  { id: 5, sender: "Bạn", text: "G(V < E)" },
+  { id: 5, sender: "Bạn", text: "G(V < E)" },
+  { id: 5, sender: "Bạn", text: "G(V < E)" },
+  { id: 5, sender: "Bạn", text: "G(V < E)" },
+  { id: 5, sender: "Bạn", text: "G(V < E)" },
+  { id: 5, sender: "Bạn", text: "G(V < E)" },
+  { id: 5, sender: "Bạn", text: "G(V < E)" },
 ];
 
 const ChatWindow = () => {
   const { chatId } = useParams();
   const [input, setInput] = useState("");
 
-  return (
+    return (
+
     <div className="flex flex-col h-screen bg-gray-100">
-      {/* Phần danh sách tin nhắn - cuộn được */}
+            {/* Phần danh sách tin nhắn - cuộn được */}
+            <Header title="Chat"/>
       <div className="flex-1 p-4 overflow-y-auto">
         {messages.map((msg) => (
           <div
