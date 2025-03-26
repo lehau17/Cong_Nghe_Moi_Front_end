@@ -5,9 +5,11 @@ import { FaBriefcase, FaCloud, FaUserFriends } from "react-icons/fa";
 import { HiOutlineClipboardList } from "react-icons/hi";
 import { IoChatbubbleEllipsesSharp, IoSettingsSharp } from "react-icons/io5";
 import ProfileModal from "./ProfileModal";
+import SettingsModal from "./SettingsModal"; // Import modal cài đặt
 
 const Sidebar = () => {
   const [openProfile, setOpenProfile] = useState(false);
+  const [openSettings, setOpenSettings] = useState(false); // Thêm state modal cài đặt
 
   return (
     <>
@@ -22,7 +24,7 @@ const Sidebar = () => {
             <h3 className="font-semibold p-2 border-b">Lê Trung Hậu</h3>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => setOpenProfile(true)}>Hồ sơ của bạn</DropdownMenuItem>
-            <DropdownMenuItem>Cài đặt</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setOpenSettings(true)}>Cài đặt</DropdownMenuItem> {/* Mở modal cài đặt */}
             <DropdownMenuItem className="text-red-500">Đăng xuất</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -38,12 +40,15 @@ const Sidebar = () => {
 
         {/* Settings */}
         <div className="mt-auto">
-          <IoSettingsSharp size={24} />
+          <IoSettingsSharp size={24} onClick={() => setOpenSettings(true)} className="cursor-pointer" /> {/* Mở modal cài đặt */}
         </div>
       </div>
 
       {/* Profile Modal */}
       <ProfileModal open={openProfile} setOpen={setOpenProfile} />
+
+      {/* Settings Modal */}
+      <SettingsModal open={openSettings} setOpen={setOpenSettings} />
     </>
   );
 };
