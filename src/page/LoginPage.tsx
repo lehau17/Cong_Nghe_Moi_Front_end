@@ -82,7 +82,7 @@ export default function LoginPage() {
                 className="w-full"
               />
               {errors.phoneNumber && (
-                <p className="text-red-500 text-sm">{errors.phoneNumber.message}</p>
+                <p className="text-red-500 text-sm text-start">{errors.phoneNumber.message}</p>
               )}
 
               {/* Input mật khẩu */}
@@ -93,7 +93,7 @@ export default function LoginPage() {
                 className="w-full"
               />
               {errors.password && (
-                <p className="text-red-500 text-sm">{errors.password.message}</p>
+                <p className="text-red-500 text-sm text-start">{errors.password.message}</p>
               )}
 
               {/* Nút đăng nhập */}

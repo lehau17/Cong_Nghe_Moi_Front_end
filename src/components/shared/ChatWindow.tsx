@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
 import Header from "./Header";
 
 const messages = [
@@ -24,7 +23,7 @@ const messages = [
 ];
 
 const ChatWindow = () => {
-  const { chatId } = useParams();
+//   const { chatId } = useParams();
   const [input, setInput] = useState("");
 
     return (
