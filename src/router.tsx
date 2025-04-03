@@ -44,7 +44,7 @@ const AppRouter = () => {
         <Route path="/setting" element={<SettingTemplate />}>
               <Route index element={<Navigate to="private-permission" replace />} />
             <Route path="private-permission" element={<SettingRolePrivatePage />} />
-            <Route path="notification" element={<div>Notification Setting</div>} />
+            <Route path="general" element={<div>general</div>} />
             <Route path="message" element={<SettingFastMessagePage />} />
             <Route path="util" element={<SettingUtilPage/>} />
         </Route>
