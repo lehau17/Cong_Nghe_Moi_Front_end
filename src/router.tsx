@@ -3,6 +3,7 @@ import ChatWindow from "./components/shared/ChatWindow";
 import FriendListPage from "./page/FriendListPage";
 import LoginPage from "./page/LoginPage";
 import SettingRolePrivatePage from "./page/SettingRolePrivate";
+import SettingUtilPage from "./page/SettingUtilPage";
 import ChatTemplate from "./template/Chat";
 import FriendListTemplate from "./template/Friend";
 import SettingTemplate from "./template/Setting";
@@ -44,6 +45,7 @@ const AppRouter = () => {
             <Route path="private-permission" element={<SettingRolePrivatePage />} />
             <Route path="notification" element={<div>Notification Setting</div>} />
             <Route path="profile" element={<div>Profile Setting</div>} />
+            <Route path="util" element={<SettingUtilPage/>} />
         </Route>
       </Routes>
     </BrowserRouter>
