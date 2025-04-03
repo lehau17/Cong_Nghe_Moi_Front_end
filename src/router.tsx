@@ -2,7 +2,9 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import ChatWindow from "./components/shared/ChatWindow";
 import FriendListPage from "./page/FriendListPage";
 import LoginPage from "./page/LoginPage";
+import SettingFastMessagePage from "./page/SettingFastMessagePage";
 import SettingRolePrivatePage from "./page/SettingRolePrivate";
+import SettingUtilPage from "./page/SettingUtilPage";
 import ChatTemplate from "./template/Chat";
 import FriendListTemplate from "./template/Friend";
 import SettingTemplate from "./template/Setting";
@@ -43,7 +45,8 @@ const AppRouter = () => {
               <Route index element={<Navigate to="private-permission" replace />} />
             <Route path="private-permission" element={<SettingRolePrivatePage />} />
             <Route path="notification" element={<div>Notification Setting</div>} />
-            <Route path="profile" element={<div>Profile Setting</div>} />
+            <Route path="message" element={<SettingFastMessagePage />} />
+            <Route path="util" element={<SettingUtilPage/>} />
         </Route>
       </Routes>
     </BrowserRouter>

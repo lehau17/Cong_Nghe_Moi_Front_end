@@ -1,8 +1,7 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-
+import { RightOutlined } from "@ant-design/icons";
 export default function SettingRolePrivatePage() {
   return (
     <div className="h-full overflow-y-auto p-4 space-y-6">
@@ -76,7 +75,10 @@ export default function SettingRolePrivatePage() {
           <CardTitle>Chặn tin nhắn</CardTitle>
         </CardHeader>
         <CardContent>
-          <Button variant="outline">Danh sách chặn</Button>
+                  <div className="flex justify-between">
+                      <span>Danh Sách Chặn</span>
+                      <span><RightOutlined /></span>
+          </div>
         </CardContent>
       </Card>
 
