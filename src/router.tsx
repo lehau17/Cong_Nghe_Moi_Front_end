@@ -12,6 +12,7 @@ import VerifyOTPPage from "./page/VerifyOTPPage";
 import ChatTemplate from "./template/Chat";
 import FriendListTemplate from "./template/Friend";
 import SettingTemplate from "./template/Setting";
+import GeneralPageSetting from "./page/GeneralPageSetting";
 
 
 const AppRouter = () => {
@@ -86,7 +87,7 @@ const AppRouter = () => {
                 >
                     <Route index element={<Navigate to="private-permission" replace />} />
                     <Route path="private-permission" element={<SettingRolePrivatePage />} />
-                    <Route path="general" element={<div>general</div>} />
+                    <Route path="general" element={<GeneralPageSetting />} />
                     <Route path="message" element={<SettingFastMessagePage />} />
                     <Route path="util" element={<SettingUtilPage />} />
                 </Route>
