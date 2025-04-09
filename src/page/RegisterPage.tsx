@@ -79,7 +79,7 @@ export default function RegisterPage() {
             <p className="text-gray-600">Tạo tài khoản Zalo mới để sử dụng dịch vụ</p>
 
             <Card className="w-96 mt-6 p-4 relative min-w-[500px]">
-                <CardHeader className="text-center">Đăng ký tài khoản</CardHeader>
+                <CardHeader className="text-center font-bold border-b flex justify-center items-center p-0 mb-0">Đăng ký tài khoản</CardHeader>
                 <CardContent className="flex flex-col items-center">
                     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 w-full">
                         <div>

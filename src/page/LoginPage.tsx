@@ -1,5 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { useLoginQuery } from "@/queries/auth.query";
 import { loginType } from "@/schemas/login";
@@ -66,7 +72,20 @@ export default function LoginPage() {
                     <h2 className="text-lg font-semibold">
                         {isQR ? "Đăng nhập qua mã QR" : "Đăng nhập với mật khẩu"}
                     </h2>
-                    <Menu className="cursor-pointer" size={20} />
+                    {/* Dropdown trigger = Menu icon */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Menu className="cursor-pointer" size={20} />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem onClick={() => setIsQR(!isQR)}>
+                                {isQR ? "Dùng mật khẩu để đăng nhập" : "Dùng mã QR để đăng nhập"}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => alert("Chức năng khác")}>
+                                Trợ giúp
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
 
                 <CardContent className="flex flex-col items-center">
@@ -118,9 +137,9 @@ export default function LoginPage() {
                     {/* Chuyển đổi giữa mã QR và mật khẩu */}
                     <p
                         className="mt-4 text-blue-500 cursor-pointer"
-                        onClick={() => setIsQR(!isQR)}
+                        onClick={() => navigate("/register")}
                     >
-                        {isQR ? "Đăng nhập với mật khẩu" : "Đăng nhập qua mã QR"}
+                        Chưa có tài khoản ? Đăng ký ngay
                     </p>
                 </CardContent>
             </Card>
