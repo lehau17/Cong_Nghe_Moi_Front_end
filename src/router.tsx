@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import ChatWindow from "./components/shared/ChatWindow";
 import FriendListPage from "./page/FriendListPage";
 import LoginPage from "./page/LoginPage";
+import RegisterPage from "./page/RegisterPage";
 import SettingFastMessagePage from "./page/SettingFastMessagePage";
 import SettingRolePrivatePage from "./page/SettingRolePrivate";
 import SettingUtilPage from "./page/SettingUtilPage";
@@ -10,47 +11,60 @@ import FriendListTemplate from "./template/Friend";
 import SettingTemplate from "./template/Setting";
 
 const AppRouter = () => {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/auth" element={<LoginPage />} />
+    return (
+        <BrowserRouter>
+            <Routes>
+                <Route path="/auth" element={<LoginPage />} />
 
-        <Route
-          path="/"
-          element={
-            <ChatTemplate>
-              <ChatWindow />
-            </ChatTemplate>
-          }
-        />
-        <Route
-          path="/chat"
-          element={
-            <ChatTemplate>
-              <ChatWindow />
-            </ChatTemplate>
-          }
-        />
-        <Route
-          path="/friend-list"
-          element={
-            <FriendListTemplate>
-              <FriendListPage />
-            </FriendListTemplate>
-          }
-        />
+                <Route
+                    path="/"
+                    element={
+                        <ChatTemplate>
+                            <ChatWindow />
+                        </ChatTemplate>
+                    }
+                />
+                <Route
+                    path="/chat"
+                    element={
+                        <ChatTemplate>
+                            <ChatWindow />
+                        </ChatTemplate>
+                    }
+                />
+                <Route
+                    path="/friend-list"
+                    element={
+                        <FriendListTemplate>
+                            <FriendListPage />
+                        </FriendListTemplate>
+                    }
+                />
 
-        {/* Setting route */}
-        <Route path="/setting" element={<SettingTemplate />}>
-              <Route index element={<Navigate to="private-permission" replace />} />
-            <Route path="private-permission" element={<SettingRolePrivatePage />} />
-            <Route path="general" element={<div>general</div>} />
-            <Route path="message" element={<SettingFastMessagePage />} />
-            <Route path="util" element={<SettingUtilPage/>} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
-  );
+                <Route
+                    path="/login"
+                    element={
+                        <LoginPage />
+                    }
+                />
+                <Route
+                    path="/register"
+                    element={
+                        <RegisterPage />
+                    }
+                />
+
+                {/* Setting route */}
+                <Route path="/setting" element={<SettingTemplate />}>
+                    <Route index element={<Navigate to="private-permission" replace />} />
+                    <Route path="private-permission" element={<SettingRolePrivatePage />} />
+                    <Route path="general" element={<div>general</div>} />
+                    <Route path="message" element={<SettingFastMessagePage />} />
+                    <Route path="util" element={<SettingUtilPage />} />
+                </Route>
+            </Routes>
+        </BrowserRouter>
+    );
 };
 
 export default AppRouter;
