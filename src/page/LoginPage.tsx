@@ -130,7 +130,7 @@ export default function LoginPage() {
                                 </p>
                             )}
 
-                            <p className="text-center text-blue-500 cursor-pointer">Quên mật khẩu</p>
+                            <p className="text-center text-blue-500 cursor-pointer" onClick={() => navigate("/forgot-password")}>Quên mật khẩu</p>
                         </form>
                     )}
 

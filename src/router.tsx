@@ -2,7 +2,9 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import ChatWindow from "./components/shared/ChatWindow";
 import ProtectedRoute from "./components/shared/ProtectedRoute";
 import PublicRoute from "./components/shared/PublicRoute";
+import ForgotPasswordPage from "./page/ForgotPasswordPage";
 import FriendListPage from "./page/FriendListPage";
+import GeneralPageSetting from "./page/GeneralPageSetting";
 import LoginPage from "./page/LoginPage";
 import RegisterPage from "./page/RegisterPage";
 import SettingFastMessagePage from "./page/SettingFastMessagePage";
@@ -12,7 +14,6 @@ import VerifyOTPPage from "./page/VerifyOTPPage";
 import ChatTemplate from "./template/Chat";
 import FriendListTemplate from "./template/Friend";
 import SettingTemplate from "./template/Setting";
-import GeneralPageSetting from "./page/GeneralPageSetting";
 
 
 const AppRouter = () => {
@@ -74,6 +75,14 @@ const AppRouter = () => {
                                 <FriendListPage />
                             </FriendListTemplate>
                         </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/forgot-password"
+                    element={
+                        <PublicRoute>
+                            <ForgotPasswordPage />
+                        </PublicRoute>
                     }
                 />
 
