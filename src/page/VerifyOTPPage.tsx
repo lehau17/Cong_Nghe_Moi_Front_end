@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { useVerifyOtp } from "@/queries/auth.query";
+import { useForgotPasswordVerifyOtp, useVerifyOtp } from "@/queries/auth.query";
 import { Buffer } from "buffer";
 import { useForm } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -10,6 +10,8 @@ import { toast } from "react-toastify";
 export default function VerifyOTPPage() {
     const [searchParams] = useSearchParams();
     const encodedPhone = searchParams.get("phone");
+    const type = searchParams.get("type");
+    const isForgotPassword = type === "forgot-password";
     const navigate = useNavigate();
     const phoneNumber = encodedPhone
         ? Buffer.from(encodedPhone, "base64").toString("utf-8")
@@ -21,17 +23,18 @@ export default function VerifyOTPPage() {
         formState: { errors },
     } = useForm<{ otp: string }>();
 
-    const { mutate, isPending } = useVerifyOtp();
+    const { mutate, isPending } = !isForgotPassword ? useVerifyOtp() : useForgotPasswordVerifyOtp();
 
     const onSubmit = (data: { otp: string }) => {
+
         mutate(
             {
                 phoneNumber,
                 otp: data.otp,
             },
             {
-                onSuccess: () => {
-                    toast.success("✅ Xác minh OTP thành công!");
+                onSuccess: (data) => {
+                    toast.success(data?.data?.message || "✅ Xác minh OTP thành công!");
                     // Optional: chuyển hướng
                     navigate("/login");
                 },

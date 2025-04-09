@@ -1,63 +1,96 @@
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { clearLS } from "@/lib/auth";
-import { DropdownMenuSeparator } from "@radix-ui/react-dropdown-menu";
 import { useState } from "react";
 import { FaBriefcase, FaCloud, FaUserFriends } from "react-icons/fa";
 import { HiOutlineClipboardList } from "react-icons/hi";
 import { IoChatbubbleEllipsesSharp, IoSettingsSharp } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import ProfileModal from "./ProfileModal";
-import SettingsModal from "./SettingsModal"; // Import modal cài đặt
+import SettingsModal from "./SettingsModal";
 
 const Sidebar = () => {
     const [openProfile, setOpenProfile] = useState(false);
-    const [openSettings, setOpenSettings] = useState(false); // Thêm state modal cài đặt
-    const navigate = useNavigate()
+    const [openSettings, setOpenSettings] = useState(false);
+    const navigate = useNavigate();
+
+    const userProfile = localStorage.getItem("profile");
+    const user = userProfile ? JSON.parse(userProfile) : null;
+    const userName = user?.fullName || "Người dùng";
+    const userAvatar = user?.avatar;
+
     return (
         <>
-            {/* Sidebar */}
             <div className="w-16 bg-blue-600 h-screen flex flex-col items-center py-4 space-y-6 text-white">
-                {/* Avatar + Dropdown Menu */}
+                {/* Avatar + Dropdown */}
                 <DropdownMenu>
-                    <DropdownMenuTrigger className="w-10 h-10 bg-white text-blue-600 flex items-center justify-center rounded-full font-bold cursor-pointer">
-                        LH
+                    <DropdownMenuTrigger className="w-10 h-10 rounded-full overflow-hidden border-2 border-white">
+                        {userAvatar ? (
+                            <img
+                                src={userAvatar}
+                                alt="avatar"
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <img
+                                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=random`}
+                                alt="avatar-default"
+                                className="w-full h-full object-cover"
+                            />
+                        )}
                     </DropdownMenuTrigger>
+
                     <DropdownMenuContent className="w-56 bg-white text-black shadow-lg p-2" side="right">
-                        <h3 className="font-semibold p-2 border-b">Lê Trung Hậu</h3>
+                        <h3 className="font-semibold p-2 border-b">{userName}</h3>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setOpenProfile(true)}>Hồ sơ của bạn</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate("/setting")}>Cài đặt</DropdownMenuItem> {/* Mở modal cài đặt */}
-                        <DropdownMenuItem className="text-red-500" onClick={() => {
-                            clearLS()
-                            navigate("/login")
-                        }}>Đăng xuất</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setOpenProfile(true)}>
+                            Hồ sơ của bạn
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate("/setting")}>
+                            Cài đặt
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            className="text-red-500"
+                            onClick={() => {
+                                clearLS();
+                                navigate("/login");
+                            }}
+                        >
+                            Đăng xuất
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
 
-                {/* Menu Icons */}
+                {/* Menu icons */}
                 <div className="flex flex-col space-y-6">
                     <IoChatbubbleEllipsesSharp
                         size={24}
                         onClick={() => navigate("/chat")}
                         className="cursor-pointer"
                     />
-
                     <HiOutlineClipboardList size={24} />
                     <FaCloud size={24} />
                     <FaUserFriends size={24} />
                     <FaBriefcase size={24} />
                 </div>
 
-                {/* Settings */}
+                {/* Nút cài đặt cuối sidebar */}
                 <div className="mt-auto">
-                    <IoSettingsSharp size={24} onClick={() => setOpenSettings(true)} className="cursor-pointer" /> {/* Mở modal cài đặt */}
+                    <IoSettingsSharp
+                        size={24}
+                        onClick={() => navigate("/setting")}
+                        className="cursor-pointer"
+                    />
                 </div>
             </div>
 
-            {/* Profile Modal */}
+            {/* Modals */}
             <ProfileModal open={openProfile} setOpen={setOpenProfile} />
-
-            {/* Settings Modal */}
             <SettingsModal open={openSettings} setOpen={setOpenSettings} />
         </>
     );

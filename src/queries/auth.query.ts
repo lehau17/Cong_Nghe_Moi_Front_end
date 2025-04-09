@@ -21,3 +21,19 @@ export const useVerifyOtp = () => {
             http.post("/auth/sign-up/verify-otp", data),
     });
 };
+
+
+// 🔐 Request gửi OTP tới số điện thoại
+export const useForgotPasswordRequestOtp = () =>
+    useMutation({
+        mutationFn: (data: { phoneNumber: string }) =>
+            http.post("/auth/forgot-password", data),
+    });
+
+// ✅ Verify OTP
+export const useForgotPasswordVerifyOtp = () =>
+    useMutation({
+        mutationFn: (data: { phoneNumber: string; otp: string }) =>
+            http.post("/auth/forgot-password/verify-otp", data),
+    });
+
