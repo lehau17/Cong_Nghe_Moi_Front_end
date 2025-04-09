@@ -9,9 +9,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { RegisterRequestOtpResponse } from "@/types/auth.type";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { AxiosError, AxiosResponse } from "axios";
+import { Buffer } from "buffer";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -44,14 +46,15 @@ export default function RegisterPage() {
     });
 
     const registerMutation = useMutation<
-        AxiosResponse<any>,
+        AxiosResponse<RegisterRequestOtpResponse>,
         AxiosError<{ message: string, dataError: any }>,
         RegisterType
     >({
         mutationFn: (body) => authApi.registerAccount(body),
-        onSuccess: () => {
+        onSuccess: (_, variables) => {
             toast.success("Đăng ký thành công!");
-            navigate("/login");
+            const encodedPhone = Buffer.from(variables.phoneNumber).toString("base64");
+            navigate(`/verify-otp?phone=${encodedPhone}`);
         },
         onError: (error) => {
             const apiError = error.response?.data;

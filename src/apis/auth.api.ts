@@ -1,17 +1,17 @@
 import http from "@/lib/http"
 import { loginType } from "@/schemas/login"
 import { RegisterType } from "@/schemas/register"
-import { AuthResponse } from "@/types/auth.type"
+import { AuthResponse, RegisterRequestOtpResponse } from "@/types/auth.type"
 
 export const URL_LOGIN = '/auth/log-in'
-export const URL_REGISTER = '/auth/sign-up'
+export const URL_REGISTER = '/auth/sign-up/request-otp'
 export const URL_LOGOUT = 'logout'
 export const URL_REFRESH_TOKEN = 'refresh-access-token'
 
 
 const authApi = {
     registerAccount(body: RegisterType) {
-        return http.post<AuthResponse>(URL_REGISTER, body)
+        return http.post<RegisterRequestOtpResponse>(URL_REGISTER, body)
     },
     login(body: loginType) {
         return http.post<AuthResponse>(URL_LOGIN, {

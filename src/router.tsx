@@ -8,6 +8,7 @@ import RegisterPage from "./page/RegisterPage";
 import SettingFastMessagePage from "./page/SettingFastMessagePage";
 import SettingRolePrivatePage from "./page/SettingRolePrivate";
 import SettingUtilPage from "./page/SettingUtilPage";
+import VerifyOTPPage from "./page/VerifyOTPPage";
 import ChatTemplate from "./template/Chat";
 import FriendListTemplate from "./template/Friend";
 import SettingTemplate from "./template/Setting";
@@ -44,6 +45,16 @@ const AppRouter = () => {
                         </ProtectedRoute>
                     }
                 />
+
+
+                <Route
+                    path="/verify-otp"
+                    element={
+                        <VerifyOTPPage />
+                    }
+                />
+
+
                 <Route
                     path="/chat"
                     element={
