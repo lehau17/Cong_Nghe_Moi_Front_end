@@ -17,7 +17,6 @@ type FormData = z.infer<typeof schema>;
 
 const EditProfileForm = ({
     profile,
-    onBack,
     setIsEdit,
 }: {
     profile: any;
