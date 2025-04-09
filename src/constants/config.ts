@@ -1,5 +1,5 @@
 const config = {
-    baseUrl: 'http://localhost:5000/api/',
+    baseUrl: 'https://be.haudev.io.vn/api',
     maxSizeUploadAvatar: 1048576 // bytes
 }
 
