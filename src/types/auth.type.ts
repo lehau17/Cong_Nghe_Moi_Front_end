@@ -10,4 +10,8 @@ export type AuthResponse = SuccessResponse<{
     user: User
 }>
 
+export type RegisterRequestOtpResponse = SuccessResponse<{
+    phoneNumber: string
+}>
+
 export type RefreshTokenReponse = SuccessResponse<{ access_token: string }>

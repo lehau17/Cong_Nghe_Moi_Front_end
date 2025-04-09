@@ -1,56 +1,100 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import ChatWindow from "./components/shared/ChatWindow";
+import ProtectedRoute from "./components/shared/ProtectedRoute";
+import PublicRoute from "./components/shared/PublicRoute";
 import FriendListPage from "./page/FriendListPage";
 import LoginPage from "./page/LoginPage";
+import RegisterPage from "./page/RegisterPage";
 import SettingFastMessagePage from "./page/SettingFastMessagePage";
 import SettingRolePrivatePage from "./page/SettingRolePrivate";
 import SettingUtilPage from "./page/SettingUtilPage";
+import VerifyOTPPage from "./page/VerifyOTPPage";
 import ChatTemplate from "./template/Chat";
 import FriendListTemplate from "./template/Friend";
 import SettingTemplate from "./template/Setting";
+import GeneralPageSetting from "./page/GeneralPageSetting";
+
 
 const AppRouter = () => {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/auth" element={<LoginPage />} />
+    return (
+        <BrowserRouter>
+            <Routes>
+                <Route
+                    path="/login"
+                    element={
+                        <PublicRoute>
+                            <LoginPage />
+                        </PublicRoute>
+                    }
+                />
+                <Route
+                    path="/register"
+                    element={
+                        <PublicRoute>
+                            <RegisterPage />
+                        </PublicRoute>
+                    }
+                />
 
-        <Route
-          path="/"
-          element={
-            <ChatTemplate>
-              <ChatWindow />
-            </ChatTemplate>
-          }
-        />
-        <Route
-          path="/chat"
-          element={
-            <ChatTemplate>
-              <ChatWindow />
-            </ChatTemplate>
-          }
-        />
-        <Route
-          path="/friend-list"
-          element={
-            <FriendListTemplate>
-              <FriendListPage />
-            </FriendListTemplate>
-          }
-        />
+                <Route
+                    path="/"
+                    element={
+                        <ProtectedRoute>
+                            <ChatTemplate>
+                                <ChatWindow />
+                            </ChatTemplate>
+                        </ProtectedRoute>
+                    }
+                />
 
-        {/* Setting route */}
-        <Route path="/setting" element={<SettingTemplate />}>
-              <Route index element={<Navigate to="private-permission" replace />} />
-            <Route path="private-permission" element={<SettingRolePrivatePage />} />
-            <Route path="general" element={<div>general</div>} />
-            <Route path="message" element={<SettingFastMessagePage />} />
-            <Route path="util" element={<SettingUtilPage/>} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
-  );
+
+                <Route
+                    path="/verify-otp"
+                    element={
+                        <VerifyOTPPage />
+                    }
+                />
+
+
+                <Route
+                    path="/chat"
+                    element={
+                        <ProtectedRoute>
+                            <ChatTemplate>
+                                <ChatWindow />
+                            </ChatTemplate>
+                        </ProtectedRoute>
+                    }
+                />
+                <Route
+                    path="/friend-list"
+                    element={
+                        <ProtectedRoute>
+                            <FriendListTemplate>
+                                <FriendListPage />
+                            </FriendListTemplate>
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/setting"
+                    element={
+                        <ProtectedRoute>
+                            <SettingTemplate />
+                        </ProtectedRoute>
+                    }
+                >
+                    <Route index element={<Navigate to="private-permission" replace />} />
+                    <Route path="private-permission" element={<SettingRolePrivatePage />} />
+                    <Route path="general" element={<GeneralPageSetting />} />
+                    <Route path="message" element={<SettingFastMessagePage />} />
+                    <Route path="util" element={<SettingUtilPage />} />
+                </Route>
+
+            </Routes>
+        </BrowserRouter>
+    );
 };
 
 export default AppRouter;

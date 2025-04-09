@@ -33,7 +33,7 @@ class Http {
         this.instance.interceptors.request.use(
             (config) => {
                 if (this.accessToken && config.headers) {
-                    config.headers.authorization = this.accessToken
+                    config.headers.authorization = "Bearer " + this.accessToken
                     return config
                 }
                 return config
@@ -65,6 +65,7 @@ class Http {
                 if (
                     ![HttpStatusCode.UnprocessableEntity, HttpStatusCode.Unauthorized, HttpStatusCode.BadRequest].includes(error.response?.status as number)
                 ) {
+                    console.log("Toast loi o HTTP")
                     const data: any | undefined = error.response?.data
                     const message = data?.message || error.message
                     toast.error(message)
@@ -72,8 +73,6 @@ class Http {
                 if (isAxiosUnauthorizedError(error)) {
                     const config = error.response?.config || {} as any
                     const { url } = config as any
-                    // Trường hợp Token hết hạn và request đó không phải là của request refresh token
-                    // thì chúng ta mới tiến hành gọi refresh token
                     if (isAxiosExpiredTokenError(error) && url !== URL_REFRESH_TOKEN) {
                         // Hạn chế gọi 2 lần handleRefreshToken
                         this.refreshTokenRequest = this.refreshTokenRequest
@@ -90,16 +89,12 @@ class Http {
                         })
                     }
 
-                    // Còn những trường hợp như token không đúng
-                    // không truyền token,
-                    // token hết hạn nhưng gọi refresh token bị fail
-                    // thì tiến hành xóa local storage và toast message
+
 
                     clearLS()
                     this.accessToken = ''
                     this.refreshToken = ''
-                    // toast.error(error.response?.data.data?.message || error.response?.data.message)
-                    // window.location.reload()
+
                 }
                 return Promise.reject(error)
             }
