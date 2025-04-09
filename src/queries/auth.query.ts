@@ -1,4 +1,5 @@
 import authApi from "@/apis/auth.api";
+import http from "@/lib/http";
 import { loginType } from "@/schemas/login";
 import { AuthResponse } from "@/types/auth.type";
 import { useMutation } from "@tanstack/react-query";
@@ -12,3 +13,11 @@ export const useLoginQuery = () => {
 }
 
 
+
+
+export const useVerifyOtp = () => {
+    return useMutation({
+        mutationFn: (data: { phoneNumber: string; otp: string }) =>
+            http.post("/auth/sign-up/verify-otp", data),
+    });
+};
