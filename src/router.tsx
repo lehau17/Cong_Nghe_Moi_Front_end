@@ -1,5 +1,4 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import ChatWindow from "./components/shared/ChatWindow";
 import ProtectedRoute from "./components/shared/ProtectedRoute";
 import PublicRoute from "./components/shared/PublicRoute";
 import ForgotPasswordPage from "./page/ForgotPasswordPage";
@@ -42,7 +41,6 @@ const AppRouter = () => {
                     element={
                         <ProtectedRoute>
                             <ChatTemplate>
-                                <ChatWindow />
                             </ChatTemplate>
                         </ProtectedRoute>
                     }
@@ -62,7 +60,6 @@ const AppRouter = () => {
                     element={
                         <ProtectedRoute>
                             <ChatTemplate>
-                                <ChatWindow />
                             </ChatTemplate>
                         </ProtectedRoute>
                     }

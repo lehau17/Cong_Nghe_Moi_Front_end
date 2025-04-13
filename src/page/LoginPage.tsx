@@ -54,12 +54,14 @@ export default function LoginPage() {
                 toast.success("Đăng nhập thành công!", { autoClose: 3000 });
                 const token = data.data.data.access_token
                 const user_id = data.data.data.user._id
+                console.log("check user_id", user_id)
                 socket.auth = { token };
                 socket.connect();
 
                 socket.on("connect", () => {
                     console.log("✅ Socket connected with auth");
                     socket.emit("register", user_id);
+
                 });
                 setTimeout(() => {
                     navigate("/chat");

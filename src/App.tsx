@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useContext, useEffect } from 'react';
-import { ToastContainer } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { getMyConversations } from './apis/conversation.api';
 import { getUserProfile } from './apis/user.api';
 import './App.css';
 import { SocketContext } from './context/SocketContext';
@@ -9,18 +10,20 @@ import { getAccessTokenFromLS } from './lib/auth';
 import AppRouter from './router';
 function App() {
     const socket = useContext(SocketContext);
-    const { refetch } = useQuery({
+    const { refetch: refetchUserProfile } = useQuery({
         queryKey: ["userProfile"],
         queryFn: getUserProfile,
         enabled: false, // 👈 để không fetch ngay từ đầu
     });
+    const { refetch } = useQuery({
+        queryKey: ["myConversations"],
+        queryFn: getMyConversations,
+    });
     useEffect(() => {
         const accessToken = getAccessTokenFromLS();
-        console.log("check accessToken", accessToken)
         if (accessToken) {
-            refetch()
+            refetchUserProfile()
                 .then((result) => {
-                    console.log("check data", result)
                     if (result.isSuccess && result.data) {
                         // 👇 Gắn token + connect + emit
                         socket.auth = { token: accessToken };
@@ -28,6 +31,14 @@ function App() {
                         socket.on("connect", () => {
                             console.log("✅ Socket connected & registered");
                             socket.emit("register", result.data.data.data._id);
+                        });
+                        socket.on("friend-request", (data) => {
+                            console.log("nhận lơuf mời kết bạn", data)
+                            toast.info(`${data.from.fullName} đã gửi lời mời kết bạn!`);
+                        });
+                        socket.on("new-message", (message) => {
+                            console.log("có tin nhắn mới>>>", message)
+                            refetch();
                         });
                     } else {
                         console.warn("⚠️ Không lấy được thông tin user");
@@ -42,11 +53,12 @@ function App() {
         }
 
         socket.on("connect_error", (err) => {
-            console.error("❌ Connect error:", err.message); // <- CỰC QUAN TRỌNG
+            console.error("❌ Connect error:", err.message);
         });
 
 
         return () => {
+            socket.off("friend-request");
             socket.disconnect(); // cleanup khi unmount
         };
     }, []);
