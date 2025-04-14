@@ -1,6 +1,20 @@
 export type User = {
     phoneNumber: string
     _id: string
+    fullName: string
+    avatar: string
+    email: string
+    password: string
+    status: string
+    is_twofa_enabled: boolean
+    twofa_method: string
+    is_visible_dob: string
+    allow_message: string
+    allow_search_by_phone: boolean
+    enable_fast_message: boolean
+    list_fast_message: string[]
+    createdAt: string
+    updatedAt: string
 }
 
 

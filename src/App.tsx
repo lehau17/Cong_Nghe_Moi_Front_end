@@ -8,12 +8,13 @@ import './App.css';
 import { SocketContext } from './context/SocketContext';
 import { getAccessTokenFromLS } from './lib/auth';
 import AppRouter from './router';
+
 function App() {
     const socket = useContext(SocketContext);
     const { refetch: refetchUserProfile } = useQuery({
         queryKey: ["userProfile"],
         queryFn: getUserProfile,
-        enabled: false, // 👈 để không fetch ngay từ đầu
+        enabled: false,
     });
     const { refetch } = useQuery({
         queryKey: ["myConversations"],
@@ -29,11 +30,10 @@ function App() {
                         socket.auth = { token: accessToken };
                         socket.connect();
                         socket.on("connect", () => {
-                            console.log("✅ Socket connected & registered");
+                            // console.log("✅ Socket connected & registered");
                             socket.emit("register", result.data.data.data._id);
                         });
                         socket.on("friend-request", (data) => {
-                            console.log("nhận lơuf mời kết bạn", data)
                             toast.info(`${data.from.fullName} đã gửi lời mời kết bạn!`);
                         });
                         socket.on("new-message", (message) => {
@@ -48,7 +48,7 @@ function App() {
                     console.error("❌ Lỗi khi lấy user profile:", err);
                     // 👉 TODO: nếu cần logout, clear token tại đây
                     localStorage.removeItem("access_token");
-                    socket.disconnect(); // ngắt đề phòng
+                    socket.disconnect(); 
                 });
         }
 
