@@ -7,12 +7,13 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { SocketContext } from "@/context/SocketContext";
 import { useLoginQuery } from "@/queries/auth.query";
 import { loginType } from "@/schemas/login";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Menu } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -35,7 +36,7 @@ const loginSchema = z.object({
 export default function LoginPage() {
     const [isQR, setIsQR] = useState(false);
     const navigate = useNavigate()
-
+    const socket = useContext(SocketContext);
     const {
         register,
         handleSubmit,
@@ -49,14 +50,26 @@ export default function LoginPage() {
 
     const onSubmit = (data: loginType) => {
         loginMutation.mutate(data, {
-            onSuccess: () => {
+            onSuccess: (data) => {
                 toast.success("Đăng nhập thành công!", { autoClose: 3000 });
+                const token = data.data.data.access_token
+                const user_id = data.data.data.user._id
+                console.log("check user_id", user_id)
+                socket.auth = { token };
+                socket.connect();
+
+                socket.on("connect", () => {
+                    console.log("✅ Socket connected with auth");
+                    socket.emit("register", user_id);
+
+                });
                 setTimeout(() => {
                     navigate("/chat");
                 }, 1000);
 
             },
             onError: (error) => {
+                // thoong bao loi
                 toast.error(error.response?.data?.message || "Đăng nhập thất bại", { autoClose: 3000 });
             },
         });

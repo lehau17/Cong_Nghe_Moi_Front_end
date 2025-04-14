@@ -41,7 +41,7 @@ const ChangePasswordModal = ({ onClose }: { onClose: () => void }) => {
         mutationFn: (data: { oldPassword: string; newPassword: string, confirmPassword: string }) =>
             http.post("/auth/change-password", data),
         onSuccess: () => {
-            toast.success("✅ Đổi mật khẩu thành công", { autoClose: 2000 });
+            toast.success("Đổi mật khẩu thành công", { autoClose: 2000 });
             onClose();
         },
         onError: (err: any) => {
