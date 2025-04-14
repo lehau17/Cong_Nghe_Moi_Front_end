@@ -1,67 +1,89 @@
 import { XOutlined } from "@ant-design/icons";
 import { Avatar } from "antd";
+import { Button } from "@/components/ui/button";
+
 interface Props {
     onClose: () => void;
 }
 
+const images = [
+    "https://i.imgur.com/5MZocC4.png",
+    "https://i.imgur.com/5MZocC4.png",
+    "https://i.imgur.com/5MZocC4.png",
+    "https://i.imgur.com/5MZocC4.png",
+    "https://i.imgur.com/5MZocC4.png",
+    "https://i.imgur.com/5MZocC4.png",
+];
+
+
+
 const ConversationInfoPanel = ({ onClose }: Props) => {
     return (
-        <div className="w-[360px] bg-white shadow-lg border-l h-full p-4 overflow-y-auto absolute right-0 top-0 z-40">
-            <div className="flex justify-end mb-2">
-                <XOutlined className="text-lg cursor-pointer text-gray-500 hover:text-red-500" onClick={onClose} />
+        <div className="w-[360px] bg-white shadow-lg border-l h-full overflow-y-auto absolute right-0 top-0 z-40">
+            <div className="flex justify-end mb-4 m-5">
+                <XOutlined
+                    className="text-lg cursor-pointer text-gray-500 hover:text-red-500"
+                    onClick={onClose}
+                />
+                <div className="border-b w-full ">Thông tin hộp thoại</div>
+
             </div>
-            <h2 className="text-lg font-semibold text-center mb-4">Thông tin hội thoại</h2>
+
             <div className="flex flex-col items-center space-y-2">
-                <Avatar size={64} src="https://randomuser.me/api/portraits/women/1.jpg" />
+                <Avatar
+                    size={80}
+                    src="https://randomuser.me/api/portraits/women/1.jpg"
+                />
                 <div className="font-semibold text-lg">ục ằng oan inh êu</div>
-                <div className="flex gap-4 mt-2 text-sm">
-                    <div className="flex flex-col items-center">
-                        <span className="text-gray-500">🔕</span>
-                        <span>Tắt thông báo</span>
+
+                <div className="flex justify-center gap-6 mt-3">
+                    <div className="flex flex-col items-center text-sm">
+                        <span>🔕</span>
+                        <span className="text-gray-600 mt-1">Tắt thông báo</span>
                     </div>
-                    <div className="flex flex-col items-center text-blue-600">
-                        <span>📌</span>
-                        <span>Bỏ ghim</span>
+                    <div className="flex flex-col items-center text-sm">
+                        <span className="text-blue-600">📌</span>
+                        <span className="text-blue-600 mt-1">Bỏ ghim hội thoại</span>
                     </div>
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col items-center text-sm">
                         <span>👥</span>
-                        <span>Tạo nhóm</span>
+                        <span className="text-gray-600 mt-1">Tạo nhóm trò chuyện</span>
                     </div>
                 </div>
             </div>
 
-            <div className="mt-6 space-y-2">
-                <div className="font-medium">🕒 Danh sách nhắc hẹn</div>
-                <div className="font-medium">👥 16 nhóm chung</div>
+            <div className="mt-6 space-y-4 text-sm">
+                <div className="flex items-center gap-2">
+                    <span>🕒</span>
+                    <span>Danh sách nhắc hẹn</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <span>👥</span>
+                    <span>16 nhóm chung</span>
+                </div>
             </div>
 
             <div className="mt-6">
-                <div className="font-semibold mb-2">Ảnh/Video</div>
+                <div className="font-semibold text-sm mb-2">Ảnh/Video</div>
                 <div className="grid grid-cols-3 gap-2">
-                    {[...Array(6)].map((_, idx) => (
+                    {images.map((img, idx) => (
                         <img
                             key={idx}
-                            src="https://i.imgur.com/5MZocC4.png"
-                            className="w-full h-20 object-cover rounded-md"
+                            src={img}
                             alt="media"
+                            className="w-full h-20 object-cover rounded-md"
                         />
                     ))}
                 </div>
-                <button className="w-full mt-3 py-2 rounded-md text-blue-600 font-semibold hover:bg-gray-100">
+                <Button
+                    variant="ghost"
+                    className="w-full mt-3 text-blue-600 font-semibold hover:bg-gray-100"
+                >
                     Xem tất cả
-                </button>
-            </div>
-
-            <div className="mt-6">
-                <div className="font-semibold mb-2">File</div>
-                <div className="bg-gray-50 border p-2 rounded-md flex items-center justify-between">
-                    <span>📄 microservices-app.zip</span>
-                    <span className="text-green-500">⬇️</span>
-                </div>
+                </Button>
             </div>
         </div>
     );
 };
 
-
-export default ConversationInfoPanel
+export default ConversationInfoPanel;
