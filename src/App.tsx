@@ -2,24 +2,42 @@ import { useQuery } from '@tanstack/react-query';
 import { useContext, useEffect } from 'react';
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { getMyConversations } from './apis/conversation.api';
 import { getUserProfile } from './apis/user.api';
 import './App.css';
+import { useChatContext } from './context/ChatContext';
 import { SocketContext } from './context/SocketContext';
 import { getAccessTokenFromLS } from './lib/auth';
 import AppRouter from './router';
+import { Conversation } from './types/conversation';
 
 function App() {
     const socket = useContext(SocketContext);
+    const { appendMessage, conversationId, updateConversationList } = useChatContext()
     const { refetch: refetchUserProfile } = useQuery({
         queryKey: ["userProfile"],
         queryFn: getUserProfile,
         enabled: false,
     });
-    const { refetch } = useQuery({
-        queryKey: ["myConversations"],
-        queryFn: getMyConversations,
-    });
+    // const { refetch } = useQuery({
+    //     queryKey: ["myConversations"],
+    //     queryFn: getMyConversations,
+    // });
+
+
+    useEffect(() => {
+        const handleNewMessage = (msg: any) => {
+            console.log("check", msg, conversationId)
+            if (msg.conversationId === conversationId) {
+                appendMessage(msg);
+            }
+        };
+
+        socket.on("new-message", handleNewMessage);
+
+        return () => {
+            socket.off("new-message", handleNewMessage);
+        };
+    }, [conversationId]);
     useEffect(() => {
         const accessToken = getAccessTokenFromLS();
         if (accessToken) {
@@ -36,10 +54,12 @@ function App() {
                         socket.on("friend-request", (data) => {
                             toast.info(`${data.from.fullName} đã gửi lời mời kết bạn!`);
                         });
-                        socket.on("new-message", (message) => {
-                            console.log("có tin nhắn mới>>>", message)
-                            refetch();
-                        });
+
+                        socket.on("update-chat-list", (data: Conversation) => {
+                            console.log("update chat list", data)
+                            updateConversationList(data)
+                        })
+
                     } else {
                         console.warn("⚠️ Không lấy được thông tin user");
                     }
@@ -48,7 +68,7 @@ function App() {
                     console.error("❌ Lỗi khi lấy user profile:", err);
                     // 👉 TODO: nếu cần logout, clear token tại đây
                     localStorage.removeItem("access_token");
-                    socket.disconnect(); 
+                    socket.disconnect();
                 });
         }
 

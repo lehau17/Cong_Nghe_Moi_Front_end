@@ -9,3 +9,14 @@ export const upload = (formData: FormData) => http.post<SuccessResponse<{
         "Content-Type": "multipart/form-data",
     },
 });
+
+
+
+export const uploadMulti = (formData: FormData) => http.post<SuccessResponse<{
+    key: string;
+    url: string;
+}[]>>("/upload/multi", formData, {
+    headers: {
+        "Content-Type": "multipart/form-data",
+    },
+});
