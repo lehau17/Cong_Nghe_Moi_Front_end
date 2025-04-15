@@ -3,6 +3,7 @@ import ProtectedRoute from "./components/shared/ProtectedRoute";
 import PublicRoute from "./components/shared/PublicRoute";
 import ForgotPasswordPage from "./page/ForgotPasswordPage";
 import FriendListPage from "./page/FriendListPage";
+import FriendRequestPage from "./page/FriendRequestPage";
 import GeneralPageSetting from "./page/GeneralPageSetting";
 import LoginPage from "./page/LoginPage";
 import RegisterPage from "./page/RegisterPage";
@@ -68,12 +69,19 @@ const AppRouter = () => {
                     path="/friend-list"
                     element={
                         <ProtectedRoute>
-                            <FriendListTemplate>
-                                <FriendListPage />
-                            </FriendListTemplate>
+                            <FriendListTemplate />
                         </ProtectedRoute>
                     }
-                />
+                >
+                    <Route index element={<FriendListPage />} />
+
+
+
+                    <Route path="friend-request" element={<FriendRequestPage />} />
+                </Route>
+
+
+
                 <Route
                     path="/forgot-password"
                     element={

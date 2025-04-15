@@ -73,7 +73,7 @@ const Sidebar = () => {
                         onClick={() => navigate("/chat")}
                         className="cursor-pointer"
                     />
-                    <HiOutlineClipboardList size={24} />
+                    <HiOutlineClipboardList size={24} onClick={() => navigate("/friend-list")} />
                     <FaCloud size={24} />
                     <FaUserFriends size={24} />
                     <FaBriefcase size={24} />
