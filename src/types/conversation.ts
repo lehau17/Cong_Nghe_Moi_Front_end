@@ -20,8 +20,28 @@ export type Message = {
     isRead: boolean;
     readAt: string | null;
     createdAt: string;
+    fileMeta?: {
+        name: string,
+        size: string,
+        mimeType: string,
+        duration?: string
+    },
     updatedAt: string;
 };
+
+export type MessageCreateBody = {
+    type: MessageType;
+    conversationId: string;
+    content?: string;
+    fileMeta?: {
+        name: string
+        size: number
+        mimeType: string
+        duration?: string | number | undefined
+        url?: string | undefined
+    }[]
+}
+
 
 export type Conversation = {
     _id: string;

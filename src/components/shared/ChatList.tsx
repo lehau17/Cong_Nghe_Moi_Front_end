@@ -1,4 +1,4 @@
-import { getMyConversations } from "@/apis/conversation.api";
+import { getConversationDetailOrCreate, getMyConversations } from "@/apis/conversation.api";
 import { sendFriendRequest } from "@/apis/friend-request.api";
 import { getUserProfile, searchUserByPhone } from "@/apis/user.api";
 import {
@@ -7,6 +7,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useChatContext } from "@/context/ChatContext";
 import { UserProfile } from "@/types/user.type";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -15,10 +16,17 @@ import { IoMdMore } from "react-icons/io";
 import { IoClose } from "react-icons/io5";
 import { toast } from "react-toastify";
 
-const ChatList = ({ onSelectUser }: { onSelectUser: (user: UserProfile | null) => void }) => {
+const ChatList = () => {
     const [searchValue, setSearchValue] = useState("");
     const [isSearching, setIsSearching] = useState(false);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const {
+        setActiveUser,
+        setConversationId,
+        conversationId,
+        conversationList,
+        setConversationList,
+    } = useChatContext();
 
     const { data: profile } = useQuery({
         queryKey: ["userProfile"],
@@ -31,15 +39,22 @@ const ChatList = ({ onSelectUser }: { onSelectUser: (user: UserProfile | null) =
         }
     }, [profile]);
 
-    const { data: conversations } = useQuery({
+    const { data: conversations, isSuccess } = useQuery({
         queryKey: ["myConversations"],
         queryFn: getMyConversations,
+
     });
+
+    useEffect(() => {
+        if (isSuccess) {
+            setConversationList(conversations.data.data);
+        }
+    }, [isSuccess])
 
     const sendFriendMutation = useMutation({
         mutationFn: (toId: string) => sendFriendRequest(toId),
-        onSuccess: () => toast.success("\u0110\u00e3 g\u1eedi l\u1eddi m\u1eddi k\u1ebft b\u1ea1n!"),
-        onError: () => toast.error("G\u1eedi l\u1eddi m\u1eddi th\u1ea5t b\u1ea1i"),
+        onSuccess: () => toast.success("Gửi lời mời kết bạn thành công !"),
+        onError: () => toast.error("Gửi lời mời kết bạn thất bại"),
     });
 
     const { data: searchResult, refetch } = useQuery({
@@ -49,7 +64,6 @@ const ChatList = ({ onSelectUser }: { onSelectUser: (user: UserProfile | null) =
     });
 
     const userFound = searchResult?.data?.data;
-    const conversationList = conversations?.data?.data || [];
 
     const handleFocus = () => {
         setIsSearching(true);
@@ -65,6 +79,22 @@ const ChatList = ({ onSelectUser }: { onSelectUser: (user: UserProfile | null) =
     const handleClear = () => {
         setSearchValue("");
         setIsSearching(false);
+    };
+
+    const handleSelectUser = async (user: UserProfile, _id?: string) => {
+        setActiveUser(user);
+        if (_id) {
+            setConversationId(_id);
+            return;
+        }
+
+        try {
+            const res = await getConversationDetailOrCreate(user._id);
+            const id = res.data.data._id;
+            setConversationId(id);
+        } catch (err) {
+            console.error("Lỗi lấy/tạo conversation", err);
+        }
     };
 
     return (
@@ -107,7 +137,7 @@ const ChatList = ({ onSelectUser }: { onSelectUser: (user: UserProfile | null) =
                         {userFound ? (
                             <div
                                 className="group relative flex justify-between items-center hover:bg-gray-100 p-2 rounded-md"
-                                onClick={() => onSelectUser(userFound)}
+                                onClick={() => handleSelectUser(userFound)}
                             >
                                 <div className="flex items-center">
                                     <img
@@ -157,12 +187,14 @@ const ChatList = ({ onSelectUser }: { onSelectUser: (user: UserProfile | null) =
                 ) : (
                     conversationList.map((conv) => {
                         const otherUser = conv.participants.find((p) => p._id !== currentUserId);
+                        const isActive = conv._id === conversationId;
+
                         if (!otherUser) return null;
                         return (
                             <div
                                 key={conv._id}
-                                onClick={() => onSelectUser(otherUser)}
-                                className="flex items-center px-4 py-3 cursor-pointer hover:bg-gray-100"
+                                onClick={() => handleSelectUser(otherUser, conv._id)}
+                                className={`flex items-center px-4 py-3 cursor-pointer ${isActive ? "bg-gray-200" : "hover:bg-gray-100"}`}
                             >
                                 <div className="relative w-12 h-12">
                                     <img
@@ -176,7 +208,7 @@ const ChatList = ({ onSelectUser }: { onSelectUser: (user: UserProfile | null) =
                                         <span className="font-[480] text-[15px]">{otherUser.fullName}</span>
                                     </div>
                                     <p className="text-sm text-gray-500 text-start">
-                                        {conv.lastMessage?.sender.label} : <span>{conv.lastMessage?.content || "Chưa có tin nhắn"}</span>
+                                        {conv.lastMessage?.sender?.label} : <span>{conv.lastMessage?.content || "Chưa có tin nhắn"}</span>
                                     </p>
                                 </div>
                             </div>

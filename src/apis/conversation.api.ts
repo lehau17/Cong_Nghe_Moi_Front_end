@@ -1,5 +1,5 @@
 import http from "@/lib/http";
-import { Conversation } from "@/types/conversation";
+import { Conversation, MessageCreateBody } from "@/types/conversation";
 import { SuccessResponse } from "@/types/utils.type";
 
 export const getMyConversations = () => {
@@ -7,8 +7,8 @@ export const getMyConversations = () => {
 };
 
 
-export const sendMessage = (conversationId: string, content: string) => {
-    return http.post("/message/send", { conversationId, content })
+export const sendMessage = (content: MessageCreateBody) => {
+    return http.post("/message/send", content)
 }
 
 
