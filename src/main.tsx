@@ -1,9 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createRoot } from 'react-dom/client'
+import 'react-h5-audio-player/lib/styles.css'
 import App from './App.tsx'
 import { ChatProvider } from './context/ChatContext.tsx'
 import { SocketContext } from './context/SocketContext.tsx'
 import './index.css'
+
 import { socket } from './socket.ts'
 const queryClient = new QueryClient()
 

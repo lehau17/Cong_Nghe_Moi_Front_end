@@ -136,15 +136,23 @@ const ChatList = () => {
                     <div className="text-sm text-gray-700">
                         {userFound ? (
                             <div
-                                className="group relative flex justify-between items-center hover:bg-gray-100 p-2 rounded-md"
+                                className="group relative flex justify-between items-center hover:bg-gray-[50] p-2 rounded-md"
                                 onClick={() => handleSelectUser(userFound)}
                             >
                                 <div className="flex items-center">
-                                    <img
-                                        src={userFound.avatar}
-                                        className="w-10 h-10 rounded-full mr-2 border"
-                                        alt="avatar"
-                                    />
+                                    <div className="w-10 h-10 rounded-full mr-2 border-1 border-black  bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-sm">
+                                        {userFound.avatar && userFound.avatar !== "" ? (
+                                            <img src={userFound.avatar} className="w-full h-full object-cover rounded-full" alt="avatar" />
+                                        ) : (
+                                            userFound.fullName
+                                                ?.split(" ")
+                                                .map((w) => w[0])
+                                                .join("")
+                                                .slice(0, 2)
+                                                .toUpperCase()
+                                        )}
+                                    </div>
+
                                     <div>
                                         <div className="font-semibold">{userFound.fullName}</div>
                                         <div className="text-sm text-gray-500">
@@ -197,18 +205,26 @@ const ChatList = () => {
                                 className={`flex items-center px-4 py-3 cursor-pointer ${isActive ? "bg-gray-200" : "hover:bg-gray-100"}`}
                             >
                                 <div className="relative w-12 h-12">
-                                    <img
-                                        src={otherUser.avatar}
-                                        alt="Avatar"
-                                        className="w-12 h-12 rounded-full border"
-                                    />
+                                    <div className="w-12 h-12 rounded-full border-1 border-black  bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-base">
+                                        {otherUser.avatar || otherUser.avatar !== "" ? (
+                                            <img src={otherUser.avatar} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                                        ) : (
+                                            otherUser.fullName
+                                                ?.split(" ")
+                                                .map((w) => w[0])
+                                                .join("")
+                                                .slice(0, 2)
+                                                .toUpperCase()
+                                        )}
+                                    </div>
+
                                 </div>
                                 <div className="flex-1 ml-3">
                                     <div className="flex justify-between">
                                         <span className="font-[480] text-[15px]">{otherUser.fullName}</span>
                                     </div>
                                     <p className="text-sm text-gray-500 text-start">
-                                        {conv.lastMessage?.sender?.label} : <span>{conv.lastMessage?.content || "Chưa có tin nhắn"}</span>
+                                        {conv.lastMessage?.sender?.label} : {conv.lastMessage?.type !== "text" ? `[${conv.lastMessage?.type}]` : <span>{conv.lastMessage?.content || "Chưa có tin nhắn"}</span>}
                                     </p>
                                 </div>
                             </div>
