@@ -19,4 +19,5 @@ export const uploadMulti = (formData: FormData) => http.post<SuccessResponse<{
     headers: {
         "Content-Type": "multipart/form-data",
     },
+    timeout: 60000, // 60s
 });

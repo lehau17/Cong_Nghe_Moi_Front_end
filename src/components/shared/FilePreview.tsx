@@ -2,6 +2,7 @@ import { DownloadOutlined, FileOutlined, FilePdfOutlined, FileWordOutlined } fro
 import mammoth from "mammoth";
 import { useEffect, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
+import * as XLSX from "xlsx";
 
 interface Props {
     file: {
@@ -19,34 +20,57 @@ export const FilePreview = ({ file }: Props) => {
     const [_, setNumPages] = useState<number | null>(null);
 
     const mimeType = file.mimeType || "";
+    const extension = file.name.split(".").pop()?.toLowerCase();
 
     useEffect(() => {
         const loadPreview = async () => {
-            if (mimeType.includes("application/pdf")) {
-                setIsPdf(true);
-                return;
-            }
+            try {
+                const res = await fetch(file.url);
+                const blob = await res.blob();
 
-            if (mimeType.includes("application/vnd.openxmlformats-officedocument.wordprocessingml.document")) {
-                try {
-                    const res = await fetch(file.url);
-                    const blob = await res.blob();
+                if (mimeType.includes("pdf")) {
+                    setIsPdf(true);
+                    return;
+                }
+
+                if (mimeType.includes("word") || extension === "docx") {
                     const arrayBuffer = await blob.arrayBuffer();
                     const result = await mammoth.convertToHtml({ arrayBuffer });
                     setPreview(result.value.slice(0, 300) + "...");
-                } catch (err) {
-                    setPreview("Không đọc được nội dung file");
                 }
-            } else if (mimeType.includes("application/json")) {
-                try {
-                    const res = await fetch(file.url);
-                    const text = await res.text();
-                    setPreview(text.slice(0, 300) + "...");
-                } catch (err) {
-                    setPreview("Không đọc được nội dung JSON");
+
+                else if (mimeType.includes("json") || extension === "json") {
+                    const text = await blob.text();
+                    setPreview(`<pre>${text.slice(0, 300)}</pre>`);
                 }
-            } else {
-                setPreview("Không hỗ trợ xem trước loại file này.");
+
+                else if (extension === "csv" || mimeType.includes("csv")) {
+                    const text = await blob.text();
+                    setPreview(`<pre>${text.slice(0, 300)}</pre>`);
+                }
+
+                else if (extension === "xlsx") {
+                    const arrayBuffer = await blob.arrayBuffer();
+                    const workbook = XLSX.read(arrayBuffer, { type: "array" });
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const csv = XLSX.utils.sheet_to_csv(sheet);
+                    setPreview(`<pre>${csv.slice(0, 300)}</pre>`);
+                }
+
+                else if (extension === "pptx") {
+                    setPreview("Xem trước file PowerPoint chưa được hỗ trợ. Vui lòng tải về.");
+                }
+
+                else if (mimeType.includes("video")) {
+                    const videoURL = URL.createObjectURL(blob);
+                    setPreview(`<video src="${videoURL}" controls class="w-full rounded" />`);
+                }
+
+                else {
+                    setPreview("Không hỗ trợ xem trước loại file này.");
+                }
+            } catch (err) {
+                setPreview("Không đọc được nội dung file.");
             }
         };
 

@@ -1,45 +1,44 @@
 import Header from "@/components/shared/Header";
+import { useAcceptedFriendRequests } from "@/queries/friend.query";
 import { DashOutlined, SearchOutlined } from "@ant-design/icons";
 import { Input, Select } from "antd";
-import { useMemo, useState } from "react";
-
-const friends = [
-    { id: 1, name: "Anh Thư", avatar: "https://via.placeholder.com/40" },
-    { id: 2, name: "Cẩm Tú", avatar: "https://via.placeholder.com/40" },
-    { id: 3, name: "Duc", avatar: "https://via.placeholder.com/40" },
-    { id: 4, name: "Fuckboiz vạn gái mê", avatar: "https://via.placeholder.com/40" },
-    { id: 5, name: "Hiền Nguyễn", avatar: "https://via.placeholder.com/40" },
-    { id: 6, name: "Bảo Lộc", avatar: "https://via.placeholder.com/40" },
-    { id: 7, name: "Đức Bùi", avatar: "https://via.placeholder.com/40" },
-];
+import { useState } from "react";
 
 const FriendListPage = () => {
     const [search, setSearch] = useState("");
     const [sortOrder, setSortOrder] = useState("A-Z");
 
-    const groupedFriends = useMemo(() => {
-        const filtered = friends
-            .filter((f) => f.name.toLowerCase().includes(search.toLowerCase()))
-            .sort((a, b) =>
-                sortOrder === "A-Z" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
-            );
+    const { data } = useAcceptedFriendRequests();
 
-        const grouped: Record<string, typeof friends> = {};
-        for (const friend of filtered) {
-            const letter = friend.name.charAt(0).toUpperCase();
-            if (!grouped[letter]) grouped[letter] = [];
-            grouped[letter].push(friend);
-        }
+    const friends = data?.data?.data || [];
 
-        return Object.entries(grouped).sort(([a], [b]) =>
-            sortOrder === "A-Z" ? a.localeCompare(b) : b.localeCompare(a)
+    // Filter + sort
+    const filteredFriends = friends
+        .filter((f) => f?.from.fullName?.toLowerCase().includes(search.toLowerCase()))
+        .sort((a, b) =>
+            sortOrder === "A-Z"
+                ? a.from.fullName.localeCompare(b.from.fullName)
+                : b.from.fullName.localeCompare(a.from.fullName)
         );
-    }, [search, sortOrder]);
+
+    // Group by first letter
+    const grouped: Record<string, any[]> = {};
+    for (const friend of filteredFriends) {
+        const letter = friend.from.fullName.charAt(0).toUpperCase();
+        if (!grouped[letter]) grouped[letter] = [];
+        grouped[letter].push(friend);
+    }
+
+    const groupedFriends = Object.entries(grouped).sort(([a], [b]) =>
+        sortOrder === "A-Z" ? a.localeCompare(b) : b.localeCompare(a)
+    );
 
     return (
         <div className="flex flex-col h-screen bg-gray-100">
             <Header title="Danh sách bạn bè" />
-            <span className="m-3 text-sm text-start font-[550]">Bạn bè ({friends.length})</span>
+            <span className="m-3 text-sm text-start font-[550]">
+                Bạn bè ({friends.length})
+            </span>
 
             <div className="bg-white rounded-lg shadow m-3 mt-0">
                 <div className="flex gap-4 mb-4 p-4">
@@ -71,16 +70,23 @@ const FriendListPage = () => {
                         <div className="p-5 font-bold text-gray-600 text-sm text-start">{letter}</div>
                         {users.map((friend) => (
                             <div
-                                key={friend.id}
-                                className="flex items-center px-5 py-3 gap-4 cursor-pointer hover:bg-gray-100"
+                                key={friend.from.id}
+                                className="flex items-center px-5 py-3 cursor-pointer hover:bg-gray-100"
                             >
-                                <img
-                                    src={friend.avatar}
-                                    alt={friend.name}
-                                    className="w-12 h-12 rounded-full border"
-                                />
+                                <div className="w-12 h-12 rounded-full  border-1 border-black  bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-sm">
+                                    {friend.from.avatar && friend.from.avatar !== "" ? (
+                                        <img src={friend.from.avatar} className="w-full h-full object-cover rounded-full" alt="avatar" />
+                                    ) : (
+                                        friend.from.fullName
+                                            ?.split(" ")
+                                            .map((w: any) => w[0])
+                                            .join("")
+                                            .slice(0, 2)
+                                            .toUpperCase()
+                                    )}
+                                </div>
                                 <div className="flex items-center justify-between h-full w-full p-2">
-                                    <span className="text-sm font-semibold text-start">{friend.name}</span>
+                                    <span className="text-sm font-semibold text-start">{friend.from.fullName}</span>
                                     <DashOutlined />
                                 </div>
                             </div>
