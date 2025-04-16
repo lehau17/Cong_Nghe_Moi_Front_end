@@ -75,3 +75,35 @@ export const useUploadMultiImageMessage = (conversationId: string) => {
     });
 };
 
+
+
+
+export const useUploadMultiFileMessage = (conversationId: string) => {
+    return useMutation({
+        mutationFn: async (files: File[]) => {
+            const formData = new FormData();
+            files.forEach((file) => formData.append("files", file));
+
+            const res = await uploadMulti(formData);
+            const uploadedUrls = res.data.data; // mỗi item: { url }
+
+            const fileMeta = uploadedUrls.map((file, index) => {
+                const original = files[index];
+                return {
+                    name: original.name,
+                    size: original.size,
+                    mimeType: original.type,
+                    duration: undefined,
+                    url: file.url,
+                };
+            });
+
+            return sendMessage({
+                conversationId,
+                type: "file",
+                content: undefined,
+                fileMeta,
+            });
+        },
+    });
+};

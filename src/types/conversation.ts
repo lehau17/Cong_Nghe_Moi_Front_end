@@ -33,6 +33,7 @@ export type MessageCreateBody = {
     type: MessageType;
     conversationId: string;
     content?: string;
+    replyTo?: string
     fileMeta?: {
         name: string
         size: number

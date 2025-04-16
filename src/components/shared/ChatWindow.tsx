@@ -2,67 +2,152 @@ import { sendMessage } from "@/apis/conversation.api";
 import { getMessageByConversation } from "@/apis/message.api";
 import { Button } from "@/components/ui/button";
 import { useChatContext } from "@/context/ChatContext";
-import { useUploadAudioMessage, useUploadMultiImageMessage } from "@/queries/upload.query";
-import { AudioOutlined, MoreOutlined, PaperClipOutlined, PictureOutlined, SendOutlined, SmileOutlined } from "@ant-design/icons";
+import { useUploadAudioMessage, useUploadMultiFileMessage, useUploadMultiImageMessage } from "@/queries/upload.query";
+import {
+    AudioOutlined,
+    MoreOutlined, PaperClipOutlined, PictureOutlined, SendOutlined, ShareAltOutlined, SmileOutlined
+} from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Avatar } from "antd";
+import { Avatar, Tooltip } from "antd";
 import EmojiPicker from "emoji-picker-react";
-import { useEffect, useRef, useState } from "react";
-import 'react-h5-audio-player/lib/styles.css';
+import { forwardRef, useEffect, useRef, useState } from "react";
 import { IoCallOutline, IoSearchOutline, IoVideocamOutline } from "react-icons/io5";
 import { toast } from "react-toastify";
 import { useClickAway } from "react-use";
 import ConversationInfoPanel from "./ConversationInfoPanel";
+import { FilePreview } from "./FilePreview";
+import ForwardModal from "./ForwardModal";
+import ImageModal from "./ImageModal";
 const pulseBars = Array.from({ length: 5 });
 
+const MessageItem = forwardRef(({
+    msg, isLast, isMine, setReplyTo, scrollToMessage, isShowAvatar,
+    onForward
+}: {
+    msg: any;
+    isLast: boolean;
+    isMine: boolean;
+    setReplyTo: (msg: any) => void;
+    scrollToMessage: (id: string) => void;
+    isShowAvatar: boolean;
+    isSelected: boolean;
+    onToggleSelected: () => void;
+    onForward: (msg: any) => void;
 
-
-const MessageItem = ({ msg, isLast, isMine }: { msg: any, isLast: boolean, isMine: boolean }) => {
+}, ref: React.Ref<HTMLDivElement>) => {
     const [showMeta, setShowMeta] = useState(false);
     const isAudio = msg.type === "audio";
     const isImage = msg.type === "image";
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
 
     return (
-        <div className={`flex flex-col ${isMine ? "items-end" : "items-start"} relative mb-4`}>
-            <div
-                onClick={() => setShowMeta(!showMeta)}
-                className={`px-4 py-2 rounded-xl max-w-[70%] break-words relative cursor-pointer
-                    ${isMine ? "bg-[#dbebff] text-black self-end" : "bg-gray-200 text-black self-start"}`}
-            >
-                {isAudio ? (
-                    <audio
-                        controls
-                        src={msg.content}
-                        style={{
-                            background: 'transparent',
-                            borderRadius: 10,
-                            outline: 'none',
-                        }}
-                    />
-                ) : isImage ? (
-                    <div className="grid grid-cols-2 gap-2">
-                        {msg.fileMeta?.map((file: any, idx: number) => (
-                            <img
-                                key={idx}
-                                src={file.url}
-                                alt={file.name}
-                                className="w-40 h-40 object-cover rounded-md hover:brightness-90 transition"
-                            />
-                        ))}
+        <div ref={ref} className={`group flex flex-col relative mb-1 ${isMine ? "items-end pr-3" : "items-start pl-3"}`}>
+            <div className={`flex items-center ${isMine ? "flex-row-reverse" : "flex-row"}`}>
+                {!isMine && isShowAvatar && (
+                    <div className="mr-2">
+                        <Avatar
+                            src={msg.sender.avatar || undefined}
+                            alt={msg.sender.fullName}
+                            size={40}
+                            className="mr-2 bg-blue-500 text-white font-semibold"
+                        >
+                            {!msg.sender.avatar && msg.sender.fullName ? msg.sender.fullName.split(" ").slice(0, 2).map((word: any) => word[0]).join("").toUpperCase() : null}
+                        </Avatar>
                     </div>
-                ) : (
-                    msg.content
                 )}
-            </div>
+                <div
+                    onClick={() => setShowMeta(!showMeta)}
+                    className={`px-4 py-2 rounded-sm break-words relative cursor-pointer ${isMine ? "bg-[#dbebff] text-black" : "bg-gray-200 text-black"}`}
+                >
+                    {msg.replyTo && (
+                        <div
+                            className="text-sm text-gray-500 italic mb-1 border-l-2 pl-2 border-blue-400 cursor-pointer"
+                            onClick={() => scrollToMessage(msg.replyTo._id)}
+                        >
+                            Trả lời: {msg.replyTo.type === "text" ? msg.replyTo.content : msg.replyTo.type === "image" ? "[Hình ảnh]" : msg.replyTo.type === "audio" ? "[Âm thanh]" : msg.replyTo.type === "file" ? "file" : "Tin nhắn"}
+                        </div>
+                    )}
+                    {msg.type === "file" && msg.fileMeta?.length ? (
+                        <div className="space-y-2 w-80">
+                            {msg.fileMeta.map((file: any, idx: number) => (
+                                <div key={idx} className="relative">
+                                    <FilePreview file={file} />
 
+                                    {msg.isPending && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-sm">
+                                            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        msg.content
+                    )}
+
+                    {isAudio ? (
+                        <audio controls src={msg.content} className="rounded" />
+                    ) : isImage ? (
+                        <div className={`grid gap-2 ${msg.fileMeta?.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+                            {msg.fileMeta?.map((file: any, idx: number) => (
+                                <div key={idx} className="relative w-40 h-40">
+                                    <img
+                                        src={file.url}
+                                        alt={file.name}
+                                        onClick={() => setPreviewImage(file.url)}
+                                        className={`w-full h-full object-cover rounded-sm transition ${msg.isPending ? "opacity-50 grayscale" : ""}`}
+                                    />
+                                    {msg.isPending && (
+                                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-sm">
+                                            <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+
+
+                    ) : (
+                        msg.content
+                    )}
+                </div>
+                <div className="hidden group-hover:flex items-center gap-1 mx-2">
+                    <Tooltip title="Trả lời">
+                        <div className="w-7 h-7 rounded-full bg-white shadow flex items-center justify-center hover:bg-gray-200 cursor-pointer" onClick={() => setReplyTo(msg)}>
+                            <MoreOutlined className="text-sm" />
+                        </div>
+                    </Tooltip>
+                    <Tooltip title="Chia sẻ">
+                        <div className="w-7 h-7 rounded-full bg-white shadow flex items-center justify-center hover:bg-gray-200 cursor-pointer" onClick={() => onForward(msg)}>
+                            <ShareAltOutlined className="text-sm" />
+                        </div>
+                    </Tooltip>
+                </div>
+            </div>
             {(isLast || showMeta) && (
                 <div className={`text-xs mt-1 text-gray-500 ${isMine ? "text-right" : "text-left"}`}>
-                    {msg.readAt ? "Đã xem" : msg.isRead ? "Đã nhận" : "Đã gửi"}
+                    {msg.error
+                        ? "Gửi thất bại"
+                        : msg.isPending
+                            ? (
+                                <span className="flex items-center gap-1">
+                                    <span>Đang gửi...</span>
+                                    <span className="w-2 h-2 animate-spin border-2 border-t-transparent border-gray-400 rounded-full" />
+                                </span>
+                            )
+                            : msg.readAt
+                                ? "Đã xem"
+                                : msg.isRead
+                                    ? "Đã nhận"
+                                    : "Đã gửi"}
                 </div>
             )}
+            <ImageModal open={!!previewImage} onClose={() => setPreviewImage(null)} src={previewImage || ""} />
         </div>
     );
-};
+});
+
+
 
 
 
@@ -70,10 +155,35 @@ const ChatWindow = () => {
     const { activeUser, conversationId, messages, setMessages } = useChatContext();
     const [isComposing, setIsComposing] = useState(false);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [replyTo, setReplyTo] = useState<any>(null);
+    const messageRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
     const inputRef = useRef<HTMLInputElement>(null);
     const emojiRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [selectedMessages, setSelectedMessages] = useState<any[]>([]);
+    const [forwardMessage, setForwardMessage] = useState<any>(null);
+    const fileOtherInputRef = useRef<HTMLInputElement>(null);
+    const [pendingMessage, setPendingMessage] = useState<any | null>(null);
+    const [pendingImages, setPendingImages] = useState<any[]>([]);
+    const [pendingFiles, setPendingFiles] = useState<any[]>([]);
+    const uploadMultiFileMutation = useUploadMultiFileMessage(conversationId as string);
 
+
+    const handlePickOtherFiles = () => {
+        fileOtherInputRef.current?.click();
+    };
+
+
+
+    // Trong render:
+
+    const toggleSelectedMessage = (msg: any) => {
+        setSelectedMessages(prev => {
+            const exists = prev.find((m) => m._id === msg._id);
+            if (exists) return prev.filter((m) => m._id !== msg._id);
+            return [...prev, msg];
+        });
+    };
 
 
     const uploadAudioMessageMutation = useUploadAudioMessage(conversationId as string);
@@ -89,12 +199,58 @@ const ChatWindow = () => {
             return toast.error("Chỉ được chọn tối đa 20 ảnh!");
         }
 
-        useUploadMulti.mutate(files);
+        const dataTemp = {
+            _id: `img-${Date.now()}`,
+            type: "image",
+            sender: { _id: currentUserId },
+            createdAt: new Date().toISOString(),
+            isPending: true,
+            fileMeta: [] as any
+        }
+
+        // ⛳️ 1. Tạo tin nhắn pending cho mỗi ảnh
+        const pending = files.map((file) => ({
+
+            name: file.name,
+            size: file.size,
+            mimeType: file.type,
+            url: URL.createObjectURL(file)
+
+        }));
+        dataTemp.fileMeta = [...pending as any]
+
+        setPendingImages((prev: any) => [...prev, dataTemp]);
+
+        // ⛳️ 2. Gọi API upload ảnh như cũ
+        useUploadMulti.mutate(files, {
+            onSuccess: () => {
+                // xoá pending khi thành công
+                setPendingImages([]);
+            },
+            onError: () => {
+                // gắn cờ lỗi cho ảnh
+                setPendingImages(prev =>
+                    prev.map(img => ({ ...img, error: true }))
+                );
+            }
+        });
     };
+
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
     const [recording, setRecording] = useState(false);
 
     useClickAway(emojiRef, () => setShowEmojiPicker(false));
+
+    const scrollToMessage = (messageId: string) => {
+        const el = messageRefs.current[messageId];
+        if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            el.classList.add("bg-yellow-100");
+            setTimeout(() => {
+                el.classList.remove("bg-yellow-100");
+            }, 2000);
+        }
+    };
 
     const [input, setInput] = useState("");
     const [showInfo, setShowInfo] = useState(false);
@@ -113,10 +269,42 @@ const ChatWindow = () => {
         }, 0);
     };
 
+    const handleOtherFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = Array.from(e.target.files || []);
+        if (!files.length || !conversationId) return;
+
+        const tempMsg = {
+            _id: `file-${Date.now()}`,
+            type: "file",
+            sender: { _id: currentUserId },
+            createdAt: new Date().toISOString(),
+            isPending: true,
+            fileMeta: files.map((file) => ({
+                name: file.name,
+                size: file.size,
+                mimeType: file.type,
+                url: URL.createObjectURL(file),
+            }))
+        };
+
+        setPendingFiles((prev) => [...prev, tempMsg]);
+
+        uploadMultiFileMutation.mutate(files, {
+            onSuccess: () => {
+                setPendingFiles([]);
+            },
+            onError: () => {
+                setPendingFiles(prev => prev.map(file => ({ ...file, error: true })));
+            }
+        });
+    };
+
+
+
     const {
         data: conversationDetail,
         isLoading,
-        isSuccess
+        isSuccess,
     } = useQuery({
         queryKey: ["messages", conversationId],
         queryFn: () => getMessageByConversation(conversationId as string),
@@ -124,19 +312,48 @@ const ChatWindow = () => {
     });
 
     useEffect(() => {
-        if (isSuccess) {
+        if (isSuccess && conversationDetail?.data?.data) {
             setMessages(conversationDetail.data.data);
         }
-    }, [isSuccess]);
+    }, [conversationId, conversationDetail]);
+
+
 
     const sendMessageMutation = useMutation({
-        mutationFn: (content: string) => sendMessage({ conversationId: conversationId as string, content, type: "text" }),
-        onSuccess: () => setInput("")
+        mutationFn: ({ content, msg }: { content: string, msg: any }) => {
+            setPendingMessage(msg); // 👈 set vào
+            return sendMessage({
+                conversationId: conversationId as string,
+                content,
+                type: "text",
+                replyTo: replyTo?._id,
+            })
+        },
+
+        onSuccess: () => {
+            setInput("");
+            setReplyTo(null);
+            setPendingMessage(null); // 👈 clear khi xong
+        },
+        onError: () => {
+            if (pendingMessage) {
+                setPendingMessage({ ...pendingMessage, error: true });
+            }
+        },
     });
 
     const handleSend = () => {
         if (!input.trim() || !conversationId) return;
-        sendMessageMutation.mutate(input.trim());
+        sendMessageMutation.mutate({
+            content: input.trim(), msg: {
+                _id: `temp-${Date.now()}`,
+                content: input.trim(),
+                type: "text",
+                sender: { _id: currentUserId },
+                createdAt: new Date().toISOString(),
+                isPending: true,
+            }
+        });
     };
 
     const startRecording = async () => {
@@ -168,6 +385,12 @@ const ChatWindow = () => {
         endRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
+
+    const allMessages = [...messages];
+    if (pendingMessage) allMessages.push(pendingMessage);
+    if (pendingImages.length) allMessages.push(...pendingImages);
+    if (pendingFiles.length) allMessages.push(...pendingFiles); // 👈 thêm dòng này
+
     if (!activeUser) {
         return (
             <div className="flex items-center justify-center h-full text-gray-500">
@@ -176,12 +399,27 @@ const ChatWindow = () => {
         );
     }
 
+
+
     return (
         <div className="flex flex-col h-screen bg-[#f0f2f5]">
             {/* Header */}
             <div className="flex items-center justify-between p-3 border-b bg-white shadow-sm">
                 <div className="flex items-center space-x-3">
-                    <Avatar size="large" src={activeUser.avatar} />
+                    <div className="w-12 h-12 rounded-full   border-1 border-black bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-base">
+                        {activeUser.avatar && activeUser.avatar !== "" ? (
+                            <img src={activeUser.avatar} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                        ) : (
+                            activeUser.fullName
+                                ?.split(" ")
+                                .map((w) => w[0])
+                                .join("")
+                                .slice(0, 2)
+                                .toUpperCase()
+                        )}
+                    </div>
+
+
                     <div className="ml-3">
                         <div className="font-semibold text-[16px]">{activeUser.fullName}</div>
                         <div className="text-sm text-gray-500 text-start">Đang hoạt động</div>
@@ -196,22 +434,59 @@ const ChatWindow = () => {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 min-h-0 flex flex-col overflow-y-auto p-4 space-y-2" onClick={() => showInfo && setShowInfo(false)}>
+            <div className="flex-1 min-h-0 flex flex-col overflow-y-auto space-y-2" onClick={() => showInfo && setShowInfo(false)}>
                 {isLoading ? (
                     <div className="text-gray-500 italic">Đang tải tin nhắn...</div>
                 ) : (
-                    messages.map((msg: any, index: number) => {
+
+                    allMessages.map((msg: any, index: number) => {
                         const isMine = msg.sender._id === currentUserId;
                         const isLast = index === messages.length - 1;
+                        const prevMsg = messages[index - 1];
+                        const isShowAvatar =
+                            !isMine &&
+                            (!prevMsg || prevMsg.sender._id !== msg.sender._id); // avatar nếu khác sender trước đó
+
                         return (
-                            <MessageItem key={index} msg={msg} isLast={isLast} isMine={isMine} />
-                        );
+                            <div key={msg._id} className="relative group">
+
+                                <MessageItem
+                                    ref={(el) => { messageRefs.current[msg._id] = el; }} // ✅ Không return gì cả
+                                    // 👈 Gắn đúng ref ở đây
+                                    key={msg._id}
+                                    msg={msg}
+                                    isLast={isLast}
+                                    isMine={isMine}
+                                    setReplyTo={setReplyTo}
+                                    scrollToMessage={scrollToMessage}
+                                    isShowAvatar={isShowAvatar}
+                                    onForward={(msg) => setForwardMessage(msg)}
+                                    isSelected={!!selectedMessages.find(m => m._id === msg._id)}
+                                    onToggleSelected={() => toggleSelectedMessage(msg)}
+                                />
+
+                            </div>
+
+
+                        )
                     })
                 )}
                 <div ref={endRef} />
             </div>
 
             {/* Input */}
+            {replyTo && (
+                <div className="px-3 py-2 border-t bg-gray-50 flex justify-between items-center">
+                    <div className="text-sm text-gray-600 max-w-[80%] truncate">
+                        <span className="font-semibold mr-1">Trả lời:</span>
+                        {replyTo.type === "text" ? replyTo.content
+                            : replyTo.type === "image" ? "[Hình ảnh]"
+                                : replyTo.type === "audio" ? "[Âm thanh]"
+                                    : "[Tin nhắn]"}
+                    </div>
+                    <button onClick={() => setReplyTo(null)} className="text-gray-500 hover:text-red-500 text-lg">×</button>
+                </div>
+            )}
             <div className="border-t bg-white px-3 py-2">
                 <div className="flex items-center gap-2 relative">
                     <div className="relative" ref={emojiRef}>
@@ -225,7 +500,17 @@ const ChatWindow = () => {
                             </div>
                         )}
                     </div>
-                    <PaperClipOutlined className="text-xl cursor-pointer" />
+                    <PaperClipOutlined className="text-xl cursor-pointer" onClick={handlePickOtherFiles} />
+                    <input
+                        type="file"
+                        multiple
+                        accept="audio/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,video/*,application/zip,application/json"
+
+                        hidden
+                        ref={fileOtherInputRef}
+                        onChange={handleOtherFilesSelected}
+                    />
+
                     <PictureOutlined className="text-xl cursor-pointer" onClick={handlePickImages} />
                     <input
                         type="file"
@@ -287,6 +572,15 @@ const ChatWindow = () => {
                     </Button>
                 </div>
             </div>
+            {forwardMessage && (
+                <ForwardModal
+                    open={!!forwardMessage}
+                    messageToForward={forwardMessage} // chỉ 1 tin nhắn được chọn
+                    onClose={() => setForwardMessage(null)}
+                />
+            )}
+
+
 
             {showInfo && <ConversationInfoPanel onClose={() => setShowInfo(false)} />}
         </div>
