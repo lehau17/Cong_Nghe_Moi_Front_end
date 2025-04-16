@@ -11,3 +11,8 @@ export const forwardMessage = (payload: {
 }) => {
     return http.post("/message/forward-many", payload);
 };
+
+
+export const recallMessage = (messageId: string) => {
+    return http.put(`/message/recall/${messageId}`);
+};

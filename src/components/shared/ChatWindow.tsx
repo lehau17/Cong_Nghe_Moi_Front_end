@@ -1,16 +1,21 @@
 import { sendMessage } from "@/apis/conversation.api";
-import { getMessageByConversation } from "@/apis/message.api";
+import { getMessageByConversation, recallMessage } from "@/apis/message.api";
 import { Button } from "@/components/ui/button";
+import { useCallContext } from "@/context/CallContext";
 import { useChatContext } from "@/context/ChatContext";
+import { SocketContext } from "@/context/SocketContext";
+import http from "@/lib/http";
 import { useUploadAudioMessage, useUploadMultiFileMessage, useUploadMultiImageMessage } from "@/queries/upload.query";
+import { agoraService } from "@/services/agoraService";
 import {
     AudioOutlined,
     MoreOutlined, PaperClipOutlined, PictureOutlined, SendOutlined, ShareAltOutlined, SmileOutlined
 } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Avatar, Tooltip } from "antd";
+import { Avatar, Dropdown, Menu, Tooltip } from "antd";
 import EmojiPicker from "emoji-picker-react";
-import { forwardRef, useEffect, useRef, useState } from "react";
+import { Reply } from "lucide-react";
+import { forwardRef, useContext, useEffect, useRef, useState } from "react";
 import { IoCallOutline, IoSearchOutline, IoVideocamOutline } from "react-icons/io5";
 import { toast } from "react-toastify";
 import { useClickAway } from "react-use";
@@ -20,9 +25,10 @@ import ForwardModal from "./ForwardModal";
 import ImageModal from "./ImageModal";
 const pulseBars = Array.from({ length: 5 });
 
+
 const MessageItem = forwardRef(({
     msg, isLast, isMine, setReplyTo, scrollToMessage, isShowAvatar,
-    onForward
+    onForward, refetch
 }: {
     msg: any;
     isLast: boolean;
@@ -30,6 +36,7 @@ const MessageItem = forwardRef(({
     setReplyTo: (msg: any) => void;
     scrollToMessage: (id: string) => void;
     isShowAvatar: boolean;
+    refetch: () => void,
     isSelected: boolean;
     onToggleSelected: () => void;
     onForward: (msg: any) => void;
@@ -40,6 +47,22 @@ const MessageItem = forwardRef(({
     const isImage = msg.type === "image";
     const [previewImage, setPreviewImage] = useState<string | null>(null);
 
+
+    const recallMutation = useMutation({
+        mutationFn: () => recallMessage(msg._id),
+        onSuccess: () => {
+            toast.success("🗑️ Thu hồi thành công")
+            refetch
+        },
+        onError: () => toast.error("❌ Thu hồi thất bại"),
+    });
+    const moreMenu = (
+        <Menu>
+            <Menu.Item key="recall" onClick={() => recallMutation.mutate()}>
+                🗑️ Thu hồi tin nhắn
+            </Menu.Item>
+        </Menu>
+    );
     return (
         <div ref={ref} className={`group flex flex-col relative mb-1 ${isMine ? "items-end pr-3" : "items-start pl-3"}`}>
             <div className={`flex items-center ${isMine ? "flex-row-reverse" : "flex-row"}`}>
@@ -82,7 +105,7 @@ const MessageItem = forwardRef(({
                             ))}
                         </div>
                     ) : (
-                        msg.content
+                        ""
                     )}
 
                     {isAudio ? (
@@ -114,7 +137,7 @@ const MessageItem = forwardRef(({
                 <div className="hidden group-hover:flex items-center gap-1 mx-2">
                     <Tooltip title="Trả lời">
                         <div className="w-7 h-7 rounded-full bg-white shadow flex items-center justify-center hover:bg-gray-200 cursor-pointer" onClick={() => setReplyTo(msg)}>
-                            <MoreOutlined className="text-sm" />
+                            <Reply className="text-sm" />
                         </div>
                     </Tooltip>
                     <Tooltip title="Chia sẻ">
@@ -122,6 +145,11 @@ const MessageItem = forwardRef(({
                             <ShareAltOutlined className="text-sm" />
                         </div>
                     </Tooltip>
+                    {isMine && <Dropdown overlay={moreMenu} trigger={['click']}>
+                        <div className="w-7 h-7 rounded-full bg-white shadow flex items-center justify-center hover:bg-gray-200 cursor-pointer">
+                            <MoreOutlined className="text-sm" />
+                        </div>
+                    </Dropdown>}
                 </div>
             </div>
             {(isLast || showMeta) && (
@@ -167,7 +195,8 @@ const ChatWindow = () => {
     const [pendingImages, setPendingImages] = useState<any[]>([]);
     const [pendingFiles, setPendingFiles] = useState<any[]>([]);
     const uploadMultiFileMutation = useUploadMultiFileMessage(conversationId as string);
-
+    const socket = useContext(SocketContext)
+    const { setShowCallUI } = useCallContext();
 
     const handlePickOtherFiles = () => {
         fileOtherInputRef.current?.click();
@@ -230,7 +259,7 @@ const ChatWindow = () => {
             onError: () => {
                 // gắn cờ lỗi cho ảnh
                 setPendingImages(prev =>
-                    prev.map(img => ({ ...img, error: true }))
+                    prev.map(img => ({ ...img, error: true, isPending: false }))
                 );
             }
         });
@@ -294,7 +323,7 @@ const ChatWindow = () => {
                 setPendingFiles([]);
             },
             onError: () => {
-                setPendingFiles(prev => prev.map(file => ({ ...file, error: true })));
+                setPendingFiles(prev => prev.map(file => ({ ...file, error: true, isPending: false })));
             }
         });
     };
@@ -305,6 +334,7 @@ const ChatWindow = () => {
         data: conversationDetail,
         isLoading,
         isSuccess,
+        refetch
     } = useQuery({
         queryKey: ["messages", conversationId],
         queryFn: () => getMessageByConversation(conversationId as string),
@@ -341,6 +371,30 @@ const ChatWindow = () => {
             }
         },
     });
+    const handleStartCall = async () => {
+        if (!conversationId || !currentUserId || !activeUser) return;
+
+        try {
+            const tokenRes = await http.get(`/agora/token?channel=${conversationId}&uid=${currentUserId}`);
+            const { token } = tokenRes.data;
+            console.log("check token>>>>>>>>", token)
+            socket.emit("call-user", {
+                to: activeUser._id,
+                from: currentUserId,
+                conversationId,
+                token,
+            });
+
+            const { videoTrack } = await agoraService.joinChannel(conversationId, token, currentUserId);
+            setShowCallUI(true);
+            videoTrack.play("video-container");
+        } catch (err) {
+            toast.error("Không thể bắt đầu cuộc gọi");
+            console.error("Call error", err);
+        }
+    };
+
+
 
     const handleSend = () => {
         if (!input.trim() || !conversationId) return;
@@ -383,7 +437,7 @@ const ChatWindow = () => {
 
     useEffect(() => {
         endRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages]);
+    }, [messages, pendingMessage, pendingImages, pendingFiles]);
 
 
     const allMessages = [...messages];
@@ -426,7 +480,8 @@ const ChatWindow = () => {
                     </div>
                 </div>
                 <div className="flex items-center space-x-4 text-xl text-gray-600">
-                    <IoCallOutline className="cursor-pointer" />
+                    <IoCallOutline className="cursor-pointer" onClick={handleStartCall} />
+
                     <IoVideocamOutline className="cursor-pointer" />
                     <IoSearchOutline className="cursor-pointer" />
                     <MoreOutlined className="cursor-pointer" onClick={() => setShowInfo(!showInfo)} />
@@ -441,7 +496,7 @@ const ChatWindow = () => {
 
                     allMessages.map((msg: any, index: number) => {
                         const isMine = msg.sender._id === currentUserId;
-                        const isLast = index === messages.length - 1;
+                        const isLast = index === allMessages.length - 1;
                         const prevMsg = messages[index - 1];
                         const isShowAvatar =
                             !isMine &&
@@ -460,6 +515,7 @@ const ChatWindow = () => {
                                     setReplyTo={setReplyTo}
                                     scrollToMessage={scrollToMessage}
                                     isShowAvatar={isShowAvatar}
+                                    refetch={refetch}
                                     onForward={(msg) => setForwardMessage(msg)}
                                     isSelected={!!selectedMessages.find(m => m._id === msg._id)}
                                     onToggleSelected={() => toggleSelectedMessage(msg)}

@@ -6,18 +6,21 @@ import { ChatProvider } from './context/ChatContext.tsx'
 import { SocketContext } from './context/SocketContext.tsx'
 import './index.css'
 
+import { CallProvider } from './context/CallContext.tsx'
 import { socket } from './socket.ts'
 const queryClient = new QueryClient()
 
 createRoot(document.getElementById('root')!).render(
-    <ChatProvider>
-        <SocketContext.Provider value={socket}>
-            <QueryClientProvider client={queryClient}>
-                <App />
+    <CallProvider>
+        <ChatProvider>
+            <SocketContext.Provider value={socket}>
+                <QueryClientProvider client={queryClient}>
+                    <App />
 
-            </QueryClientProvider>
-        </SocketContext.Provider>
+                </QueryClientProvider>
+            </SocketContext.Provider>
 
-    </ChatProvider>
+        </ChatProvider>
+    </CallProvider>
 
 )

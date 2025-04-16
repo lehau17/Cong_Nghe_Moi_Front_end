@@ -8,15 +8,18 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useChatContext } from "@/context/ChatContext";
+import { SocketContext } from "@/context/SocketContext";
 import { UserProfile } from "@/types/user.type";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { FaUserPlus } from "react-icons/fa";
 import { IoMdMore } from "react-icons/io";
 import { IoClose } from "react-icons/io5";
 import { toast } from "react-toastify";
+import { useDebounce } from "react-use";
 
 const ChatList = () => {
+    const socket = useContext(SocketContext);
     const [searchValue, setSearchValue] = useState("");
     const [isSearching, setIsSearching] = useState(false);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -42,14 +45,13 @@ const ChatList = () => {
     const { data: conversations, isSuccess } = useQuery({
         queryKey: ["myConversations"],
         queryFn: getMyConversations,
-
     });
 
     useEffect(() => {
         if (isSuccess) {
             setConversationList(conversations.data.data);
         }
-    }, [isSuccess])
+    }, [isSuccess]);
 
     const sendFriendMutation = useMutation({
         mutationFn: (toId: string) => sendFriendRequest(toId),
@@ -67,14 +69,20 @@ const ChatList = () => {
 
     const handleFocus = () => {
         setIsSearching(true);
-        if (searchValue.trim().length === 10) refetch();
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setSearchValue(value);
-        if (value.length === 10) refetch();
     };
+
+    useDebounce(
+        () => {
+            if (searchValue.length === 10) refetch();
+        },
+        500,
+        [searchValue]
+    );
 
     const handleClear = () => {
         setSearchValue("");
@@ -92,6 +100,7 @@ const ChatList = () => {
             const res = await getConversationDetailOrCreate(user._id);
             const id = res.data.data._id;
             setConversationId(id);
+            socket.emit("join-room", id);
         } catch (err) {
             console.error("Lỗi lấy/tạo conversation", err);
         }
@@ -99,7 +108,6 @@ const ChatList = () => {
 
     return (
         <div className="w-90 bg-white h-screen flex flex-col border-r">
-            {/* Header */}
             <div className="p-2 flex items-center border-b space-x-2">
                 <div className="relative w-full">
                     <input

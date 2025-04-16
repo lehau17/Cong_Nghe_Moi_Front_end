@@ -1,6 +1,7 @@
-import { fetchPendingFriendRequests } from "@/apis/friend-request.api";
+import { fetchAcceptFriendRequests, fetchPendingFriendRequests } from "@/apis/friend-request.api";
 import http from "@/lib/http";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, UseMutationOptions, useQuery } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 
 export const usePendingFriendRequests = () => {
     return useQuery({
@@ -9,8 +10,13 @@ export const usePendingFriendRequests = () => {
     });
 };
 
-import { UseMutationOptions } from "@tanstack/react-query";
-import { toast } from "react-toastify";
+export const useAcceptedFriendRequests = () => {
+    return useQuery({
+        queryKey: ["friend-requests", "accepted"],
+        queryFn: fetchAcceptFriendRequests,
+    });
+};
+
 
 export const useAcceptFriendRequest = (options?: UseMutationOptions<any, unknown, string>) => {
     return useMutation({
