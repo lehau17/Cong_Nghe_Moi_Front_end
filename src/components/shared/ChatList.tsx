@@ -17,12 +17,15 @@ import { IoMdMore } from "react-icons/io";
 import { IoClose } from "react-icons/io5";
 import { toast } from "react-toastify";
 import { useDebounce } from "react-use";
+import FriendSearchModal from "./FriendSearchModal";
 
 const ChatList = () => {
     const socket = useContext(SocketContext);
     const [searchValue, setSearchValue] = useState("");
     const [isSearching, setIsSearching] = useState(false);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const [showFriendModal, setShowFriendModal] = useState(false);
+
     const {
         setActiveUser,
         setConversationId,
@@ -125,7 +128,10 @@ const ChatList = () => {
                         />
                     )}
                 </div>
-                <FaUserPlus className="text-gray-600 cursor-pointer text-xl" />
+                <FaUserPlus
+                    className="text-gray-600 cursor-pointer text-xl"
+                    onClick={() => setShowFriendModal(true)}
+                />
                 <IoMdMore className="text-gray-600 ml-2 cursor-pointer text-xl" />
             </div>
 
@@ -240,6 +246,12 @@ const ChatList = () => {
                     })
                 )}
             </div>
+            <FriendSearchModal
+                open={showFriendModal}
+                onClose={() => setShowFriendModal(false)}
+                onSelectUser={(user) => handleSelectUser(user)}
+            />
+
         </div>
     );
 };

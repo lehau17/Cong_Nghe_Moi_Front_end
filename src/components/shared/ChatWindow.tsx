@@ -377,7 +377,7 @@ const ChatWindow = () => {
         try {
             const tokenRes = await http.get(`/agora/token?channel=${conversationId}&uid=${currentUserId}`);
             const { token } = tokenRes.data;
-            console.log("check token>>>>>>>>", token)
+            const { videoTrack } = await agoraService.joinChannel(conversationId, token, currentUserId);
             socket.emit("call-user", {
                 to: activeUser._id,
                 from: currentUserId,
@@ -385,7 +385,6 @@ const ChatWindow = () => {
                 token,
             });
 
-            const { videoTrack } = await agoraService.joinChannel(conversationId, token, currentUserId);
             setShowCallUI(true);
             videoTrack.play("video-container");
         } catch (err) {
