@@ -105,7 +105,7 @@ export default function LoginPage() {
                     {isQR ? (
                         <QRCodeCanvas value="https://zalo.me/qr-login" size={180} />
                     ) : (
-                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 w-full">
+                        <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4 w-full">
                             {/* Input số điện thoại */}
                             <Input
                                 placeholder="Số điện thoại"
