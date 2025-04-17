@@ -14,6 +14,6 @@ export const fetchPendingFriendRequests = async () => {
 
 
 export const fetchAcceptFriendRequests = async () => {
-    const response = await http.get<SuccessResponse<any[]>>("friend-request?status=accepted");
+    const response = await http.get<SuccessResponse<any[]>>("friend-request/friends");
     return response
 };
