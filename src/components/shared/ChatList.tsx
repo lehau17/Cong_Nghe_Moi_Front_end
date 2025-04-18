@@ -12,12 +12,13 @@ import { SocketContext } from "@/context/SocketContext";
 import { UserProfile } from "@/types/user.type";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useContext, useEffect, useState } from "react";
-import { FaUserPlus } from "react-icons/fa";
+import { FaUserFriends, FaUserPlus } from "react-icons/fa";
 import { IoMdMore } from "react-icons/io";
 import { IoClose } from "react-icons/io5";
 import { toast } from "react-toastify";
 import { useDebounce } from "react-use";
 import FriendSearchModal from "./FriendSearchModal";
+import CreateGroupModal from "./CreateGroupModal";
 
 const ChatList = () => {
     const socket = useContext(SocketContext);
@@ -25,6 +26,7 @@ const ChatList = () => {
     const [isSearching, setIsSearching] = useState(false);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [showFriendModal, setShowFriendModal] = useState(false);
+    const [showCreateGroup, setShowCreateGroup] = useState(false);
 
     const {
         setActiveUser,
@@ -132,7 +134,11 @@ const ChatList = () => {
                     className="text-gray-600 cursor-pointer text-xl"
                     onClick={() => setShowFriendModal(true)}
                 />
-                <IoMdMore className="text-gray-600 ml-2 cursor-pointer text-xl" />
+                <FaUserFriends
+                    className="text-gray-600 cursor-pointer text-xl"
+                    onClick={() => setShowCreateGroup(true)}
+                />
+                {/* <IoMdMore className="text-gray-600 ml-2 cursor-pointer text-xl" /> */}
             </div>
 
             {!isSearching && (
@@ -216,7 +222,7 @@ const ChatList = () => {
                             <div
                                 key={conv._id}
                                 onClick={() => handleSelectUser(otherUser, conv._id)}
-                                className={`flex items-center px-4 py-3 cursor-pointer ${isActive ? "bg-gray-200" : "hover:bg-gray-100"}`}
+                                className={`flex items-center px-4 py-3 cursor-pointer ${isActive ? "bg-[#dbebff]" : "hover:bg-[#dbebff]"}`}
                             >
                                 <div className="relative w-12 h-12">
                                     <div className="w-12 h-12 rounded-full border-1 border-black  bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-base">
@@ -251,6 +257,7 @@ const ChatList = () => {
                 onClose={() => setShowFriendModal(false)}
                 onSelectUser={(user) => handleSelectUser(user)}
             />
+            <CreateGroupModal open={showCreateGroup} onClose={() => setShowCreateGroup(false)} />
 
         </div>
     );

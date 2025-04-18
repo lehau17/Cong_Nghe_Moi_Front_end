@@ -14,6 +14,7 @@ interface ChatContextType {
     conversationList: Conversation[];
     setConversationList: (list: Conversation[]) => void;
     updateConversationList: (updatedConv: Conversation) => void
+    updateChatList: (chat: any) => void
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -37,6 +38,18 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
             }
         });
     };
+
+    const updateChatList = (chat: any) => {
+        setMessages(prev => {
+            const index = prev.findIndex(chatPrev => chatPrev._id === chat._id);
+            if (index !== -1) {
+                const newChatList = [...prev]
+                newChatList[index] = chat
+                return newChatList
+            }
+            return [...prev]
+        })
+    }
     return (
         <ChatContext.Provider
             value={{
@@ -49,7 +62,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
                 appendMessage,
                 conversationList,
                 setConversationList,
-                updateConversationList
+                updateConversationList,
+                updateChatList
             }}
         >
             {children}

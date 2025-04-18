@@ -10,10 +10,11 @@ export const usePendingFriendRequests = () => {
     });
 };
 
-export const useAcceptedFriendRequests = () => {
+export const useAcceptedFriendRequests = (enabled: boolean = true) => {
     return useQuery({
         queryKey: ["friend-requests", "accepted"],
         queryFn: fetchAcceptFriendRequests,
+        enabled
     });
 };
 

@@ -14,7 +14,7 @@ import {
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Avatar, Dropdown, Menu, Tooltip } from "antd";
 import EmojiPicker from "emoji-picker-react";
-import { Reply } from "lucide-react";
+import { Reply, ThumbsUp } from "lucide-react";
 import { forwardRef, useContext, useEffect, useRef, useState } from "react";
 import { IoCallOutline, IoSearchOutline, IoVideocamOutline } from "react-icons/io5";
 import { toast } from "react-toastify";
@@ -23,12 +23,13 @@ import ConversationInfoPanel from "./ConversationInfoPanel";
 import { FilePreview } from "./FilePreview";
 import ForwardModal from "./ForwardModal";
 import ImageModal from "./ImageModal";
+import ProfileModal from "./ProfileModel";
 const pulseBars = Array.from({ length: 5 });
 
 
 const MessageItem = forwardRef(({
     msg, isLast, isMine, setReplyTo, scrollToMessage, isShowAvatar,
-    onForward, refetch
+    onForward,
 }: {
     msg: any;
     isLast: boolean;
@@ -46,13 +47,16 @@ const MessageItem = forwardRef(({
     const isAudio = msg.type === "audio";
     const isImage = msg.type === "image";
     const [previewImage, setPreviewImage] = useState<string | null>(null);
-
-
+    const [showReactions, setShowReactions] = useState(false);
+    const [openProfile, setOpenProfile] = useState(false);
+    const [selectedUser, setSelectedUser] = useState<any>(null);
+    const { updateChatList } = useChatContext()
     const recallMutation = useMutation({
         mutationFn: () => recallMessage(msg._id),
-        onSuccess: () => {
+        onSuccess: (data) => {
             toast.success("🗑️ Thu hồi thành công")
-            refetch
+            updateChatList(data.data.data)
+            // refetch() // xài tạm
         },
         onError: () => toast.error("❌ Thu hồi thất bại"),
     });
@@ -71,8 +75,12 @@ const MessageItem = forwardRef(({
                         <Avatar
                             src={msg.sender.avatar || undefined}
                             alt={msg.sender.fullName}
+                            onClick={() => {
+                                setSelectedUser(msg.sender); // 👈 Lưu user
+                                setOpenProfile(true);
+                            }}
                             size={40}
-                            className="mr-2 bg-blue-500 text-white font-semibold"
+                            className="mr-2 bg-blue-500 text-white font-semibold cursor-pointer"
                         >
                             {!msg.sender.avatar && msg.sender.fullName ? msg.sender.fullName.split(" ").slice(0, 2).map((word: any) => word[0]).join("").toUpperCase() : null}
                         </Avatar>
@@ -85,7 +93,13 @@ const MessageItem = forwardRef(({
                         </div>
                     )}
                 <div
-                    onClick={() => setShowMeta(!showMeta)}
+                    onClick={(e) => {
+                        const target = e.target as HTMLElement;
+                        if (target.closest(".reaction-button") || target.closest(".reaction-popup")) {
+                            return; // ❌ Không toggle showMeta nếu nhấn vào phần reaction
+                        }
+                        setShowMeta(!showMeta);
+                    }}
                     className={`px-4 py-2 rounded-sm break-words relative cursor-pointer ${isMine ? "bg-[#dbebff] text-black" : "bg-gray-200 text-black"}`}
                 >
                     {msg.replyTo && (
@@ -139,6 +153,46 @@ const MessageItem = forwardRef(({
                     ) : (
                         msg.content
                     )}
+                    {/* 👍 Reaction Button – chỉ hiển thị khi hover tin nhắn */}
+                    <div
+                        className={`absolute ${isMine ? "right-[8px]" : "left-[8px]"} bottom-[-10px] z-20`}
+                        onMouseEnter={(e) => {
+                            e.stopPropagation();
+                            setShowReactions(true)
+                        }}
+                        onMouseLeave={(e) => {
+                            e.stopPropagation();
+                            setShowReactions(false)
+                        }}
+                    >
+                        {/* Nút 👍 – ẩn mặc định, hiện khi hover vào bubble */}
+                        <div className="hidden group-hover:block reaction-button">
+                            <div className="w-6 h-6 bg-white rounded-full shadow flex items-center justify-center cursor-pointer">
+                                <ThumbsUp size={14} strokeWidth={0.75} />
+                            </div>
+                        </div>
+
+                        {/* Popup reactions */}
+                        {showReactions && (
+                            <div
+                                className={`absolute bottom-6 ${isMine && "right-0"} bg-white shadow-md px-3 py-2 rounded-full flex gap-4 z-30 text-xl reaction-popup`}
+                                onMouseEnter={(e) => {
+                                    e.stopPropagation();
+                                    setShowReactions(true)
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.stopPropagation();
+                                    setShowReactions(false)
+                                }}
+                            >
+                                <span className="cursor-pointer hover:scale-150 transition  text-[18px]">👍</span>
+                                <span className="cursor-pointer hover:scale-150 transition text-[18px]">❤️</span>
+                                <span className="cursor-pointer hover:scale-150 transition text-[18px]">😂</span>
+                                <span className="cursor-pointer hover:scale-150 transition text-[18px]">😢</span>
+                                <span className="cursor-pointer hover:scale-150 transition text-[18px]">😡</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
                 <div className="hidden group-hover:flex items-center gap-1 mx-2">
                     <Tooltip title="Trả lời">
@@ -182,6 +236,12 @@ const MessageItem = forwardRef(({
                 </>
             )}
 
+            <ProfileModal
+                open={openProfile}
+                onClose={() => setOpenProfile(false)}
+                user={selectedUser} // 👈 Truyền user tạm thời
+            />
+
             <ImageModal open={!!previewImage} onClose={() => setPreviewImage(null)} src={previewImage || ""} />
         </div>
     );
@@ -208,7 +268,7 @@ const ChatWindow = () => {
     const [pendingFiles, setPendingFiles] = useState<any[]>([]);
     const uploadMultiFileMutation = useUploadMultiFileMessage(conversationId as string);
     const socket = useContext(SocketContext)
-    const { setShowCallUI } = useCallContext();
+    const { setShowCallUI, setCallInfo } = useCallContext();
 
     const handlePickOtherFiles = () => {
         fileOtherInputRef.current?.click();
@@ -296,6 +356,7 @@ const ChatWindow = () => {
     const [input, setInput] = useState("");
     const [showInfo, setShowInfo] = useState(false);
     const endRef = useRef<HTMLDivElement | null>(null);
+    const currentUser = JSON.parse(localStorage.getItem("profile") as string)
     const currentUserId = JSON.parse(localStorage.getItem("profile") as string)?._id;
 
     const handleEmojiClick = (emojiData: any) => {
@@ -392,11 +453,15 @@ const ChatWindow = () => {
             const { videoTrack } = await agoraService.joinChannel(conversationId, token, currentUserId);
             socket.emit("call-user", {
                 to: activeUser._id,
-                from: currentUserId,
+                from: currentUser,
                 conversationId,
                 token,
             });
-
+            setCallInfo({
+                channelId: conversationId,
+                token,
+                conversationId,
+            });
             setShowCallUI(true);
             videoTrack.play("video-container");
         } catch (err) {

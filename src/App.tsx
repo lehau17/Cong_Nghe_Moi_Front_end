@@ -17,7 +17,7 @@ import { Conversation } from './types/conversation';
 
 function App() {
     const socket = useContext(SocketContext);
-    const { setShowCallUI } = useCallContext();
+    const { setShowCallUI, setCallInfo } = useCallContext();
 
 
     const { appendMessage, conversationId, updateConversationList } = useChatContext()
@@ -69,13 +69,30 @@ function App() {
                         })
 
                         socket.on("incoming-call", ({ from, conversationId, token }) => {
-                            console.log(from, conversationId, token)
+                            setCallInfo({
+                                channelId: conversationId,
+                                token,
+                                conversationId, // 👈 Set luôn ở đây
+                            });
                             Modal.confirm({
                                 title: `${from.fullName} đang gọi đến`,
                                 content: "Bạn có muốn trả lời cuộc gọi không?",
                                 okText: "Trả lời",
                                 cancelText: "Từ chối",
+                                onCancel: async () => {
+                                    try {
+                                        await agoraService.leaveChannel(); // Leave nếu đã vào rồi
+                                    } catch (err) {
+                                        console.warn("Không cần leave vì chưa vào channel");
+                                    }
+                                    socket.emit("decline-call", {
+                                        to: from._id,
+                                        conversationId,
+                                    });
+                                },
+
                                 onOk: async () => {
+                                    console.log('check data in receive call', result.data.data.data._id)
                                     const { videoTrack } = await agoraService.joinChannel(conversationId, token, result.data.data.data._id);
                                     setShowCallUI(true);
                                     setTimeout(() => {
@@ -85,6 +102,22 @@ function App() {
                             });
                         });
 
+                        socket.on("call-declined", ({ reason }) => {
+                            Modal.info({
+                                title: "Cuộc gọi bị từ chối",
+                                content: reason || "Người nhận không sẵn sàng nhận cuộc gọi.",
+                            });
+                            setShowCallUI(false);
+
+                            // agoraService.leaveChannel()
+                        });
+
+
+                        socket.on("end-call", ({ }) => {
+                            // Nếu đang trong cuộc gọi này thì rời khỏi kênh + đóng UI
+                            agoraService.leaveChannel();
+                            setShowCallUI(false);
+                        });
 
 
 

@@ -11,7 +11,6 @@ const FriendListPage = () => {
     const { data } = useAcceptedFriendRequests();
 
     const friends = data?.data?.data || [];
-    console.log(friends)
     // Filter + sort
     const filteredFriends = friends
         .filter((f) => f?.fullName?.toLowerCase().includes(search.toLowerCase()))
@@ -21,7 +20,6 @@ const FriendListPage = () => {
                 : b?.fullName.localeCompare(a?.fullName)
         );
 
-    console.log(filteredFriends)
 
     // Group by first letter
     const grouped: Record<string, any[]> = {};
@@ -32,14 +30,12 @@ const FriendListPage = () => {
     }
 
 
-    console.log(grouped)
 
 
     const groupedFriends = Object.entries(grouped).sort(([a], [b]) =>
         sortOrder === "A-Z" ? a.localeCompare(b) : b.localeCompare(a)
     );
 
-    console.log(groupedFriends)
 
     return (
         <div className="flex flex-col h-screen bg-gray-100">
