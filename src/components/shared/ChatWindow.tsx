@@ -78,6 +78,12 @@ const MessageItem = forwardRef(({
                         </Avatar>
                     </div>
                 )}
+                {!isMine &&
+                    !isShowAvatar && (
+                        <div className="mr-2 h-10 w-10">
+
+                        </div>
+                    )}
                 <div
                     onClick={() => setShowMeta(!showMeta)}
                     className={`px-4 py-2 rounded-sm break-words relative cursor-pointer ${isMine ? "bg-[#dbebff] text-black" : "bg-gray-200 text-black"}`}
@@ -153,23 +159,29 @@ const MessageItem = forwardRef(({
                 </div>
             </div>
             {(isLast || showMeta) && (
-                <div className={`text-xs mt-1 text-gray-500 ${isMine ? "text-right" : "text-left"}`}>
-                    {msg.error
-                        ? "Gửi thất bại"
-                        : msg.isPending
-                            ? (
+                <>
+
+
+                    <div className={`flex text-xs mt-1 text-gray-500 ${isMine ? "text-right" : "text-left"}`}>
+                        {!isMine && (
+                            <div className="mr-2 h-10 w-10"></div>
+                        )}
+                        {msg.error
+                            ? "Gửi thất bại"
+                            : msg.isPending ? (
                                 <span className="flex items-center gap-1">
                                     <span>Đang gửi...</span>
                                     <span className="w-2 h-2 animate-spin border-2 border-t-transparent border-gray-400 rounded-full" />
                                 </span>
-                            )
-                            : msg.readAt
+                            ) : msg.readAt
                                 ? "Đã xem"
                                 : msg.isRead
                                     ? "Đã nhận"
                                     : "Đã gửi"}
-                </div>
+                    </div>
+                </>
             )}
+
             <ImageModal open={!!previewImage} onClose={() => setPreviewImage(null)} src={previewImage || ""} />
         </div>
     );
