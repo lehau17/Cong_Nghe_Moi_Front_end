@@ -76,7 +76,7 @@ const MessageItem = forwardRef(({
                             src={msg.sender.avatar || undefined}
                             alt={msg.sender.fullName}
                             onClick={() => {
-                                setSelectedUser(msg.sender); // 👈 Lưu user
+                                setSelectedUser(msg.sender._id); // 👈 Lưu user
                                 setOpenProfile(true);
                             }}
                             size={40}
@@ -100,7 +100,7 @@ const MessageItem = forwardRef(({
                         }
                         setShowMeta(!showMeta);
                     }}
-                    className={`px-4 py-2 rounded-sm break-words relative cursor-pointer ${isMine ? "bg-[#dbebff] text-black" : "bg-gray-200 text-black"}`}
+                    className={`px-4 py-2 rounded-sm break-words relative cursor-pointer ${isMine ? "bg-[#dbebff] text-black" : "bg-gray-200 text-black"} ${msg.isRevoke && "text-gray"}`}
                 >
                     {msg.replyTo && (
                         <div
@@ -151,7 +151,7 @@ const MessageItem = forwardRef(({
 
 
                     ) : (
-                        msg.content
+                        <span className={`${msg.isRevoke && "text-[gray] font-thin  "}`}>{msg.content} </span>
                     )}
                     {/* 👍 Reaction Button – chỉ hiển thị khi hover tin nhắn */}
                     <div
@@ -424,7 +424,7 @@ const ChatWindow = () => {
 
     const sendMessageMutation = useMutation({
         mutationFn: ({ content, msg }: { content: string, msg: any }) => {
-            setPendingMessage(msg); // 👈 set vào
+            setPendingMessage(msg);
             return sendMessage({
                 conversationId: conversationId as string,
                 content,

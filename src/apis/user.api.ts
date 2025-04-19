@@ -10,3 +10,8 @@ export const searchUserByPhone = async (phone: string) => {
     const res = await http.get<SuccessResponse<UserProfile>>(`/user/search?phone=${phone}`);
     return res
 };
+
+
+
+
+export const getUserProfileById = (id: string) => http.get<SuccessResponse<UserProfile>>(`/user/find-byid/${id}`);

@@ -64,7 +64,6 @@ function App() {
                         });
 
                         socket.on("update-chat-list", (data: Conversation) => {
-                            console.log("update chat list", data)
                             updateConversationList(data)
                         })
 

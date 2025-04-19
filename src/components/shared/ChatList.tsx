@@ -17,8 +17,8 @@ import { IoMdMore } from "react-icons/io";
 import { IoClose } from "react-icons/io5";
 import { toast } from "react-toastify";
 import { useDebounce } from "react-use";
-import FriendSearchModal from "./FriendSearchModal";
 import CreateGroupModal from "./CreateGroupModal";
+import FriendSearchModal from "./FriendSearchModal";
 
 const ChatList = () => {
     const socket = useContext(SocketContext);
