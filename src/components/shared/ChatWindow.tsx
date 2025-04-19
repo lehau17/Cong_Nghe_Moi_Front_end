@@ -237,7 +237,7 @@ const MessageItem = forwardRef(({
             <ProfileModal
                 open={openProfile}
                 onClose={() => setOpenProfile(false)}
-                user={msg.sender.id} // 👈 Truyền user tạm thời
+                user={msg.sender._id} // 👈 Truyền user tạm thời
             />
 
             <ImageModal open={!!previewImage} onClose={() => setPreviewImage(null)} src={previewImage || ""} />
