@@ -49,7 +49,6 @@ const MessageItem = forwardRef(({
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [showReactions, setShowReactions] = useState(false);
     const [openProfile, setOpenProfile] = useState(false);
-    const [selectedUser, setSelectedUser] = useState<any>(null);
     const { updateChatList } = useChatContext()
     const recallMutation = useMutation({
         mutationFn: () => recallMessage(msg._id),
@@ -76,7 +75,6 @@ const MessageItem = forwardRef(({
                             src={msg.sender.avatar || undefined}
                             alt={msg.sender.fullName}
                             onClick={() => {
-                                setSelectedUser(msg.sender._id); // 👈 Lưu user
                                 setOpenProfile(true);
                             }}
                             size={40}
@@ -239,7 +237,7 @@ const MessageItem = forwardRef(({
             <ProfileModal
                 open={openProfile}
                 onClose={() => setOpenProfile(false)}
-                user={selectedUser} // 👈 Truyền user tạm thời
+                user={msg.sender.id} // 👈 Truyền user tạm thời
             />
 
             <ImageModal open={!!previewImage} onClose={() => setPreviewImage(null)} src={previewImage || ""} />
