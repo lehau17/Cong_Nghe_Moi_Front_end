@@ -14,7 +14,7 @@ export default function ProfileModal({ open, onClose, user }: Props) {
     const { data } = useQuery({
         queryKey: ["getuserbyid", user],
         queryFn: () => getUserProfileById(user),
-        enabled: !!user
+        enabled: open
     })
 
     const mockUser = data?.data.data
