@@ -22,6 +22,7 @@ export type UserProfile = {
     _id: string;
     fullName: string;
     type?: string
+    role?: string
     userName: string;
     phoneNumber: string;
     email: string;

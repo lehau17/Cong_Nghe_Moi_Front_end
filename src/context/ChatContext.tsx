@@ -12,7 +12,8 @@ interface ChatContextType {
     messages: any[];
     appendMessage: (msg: any) => void;
     conversationList: Conversation[];
-    setConversationList: (list: Conversation[]) => void;
+    setConversationList: React.Dispatch<React.SetStateAction<Conversation[]>>
+
     updateConversationList: (updatedConv: Conversation) => void
     updateChatList: (chat: any) => void
 }

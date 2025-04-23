@@ -15,7 +15,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { Avatar, Dropdown, Menu, Tooltip } from "antd";
 import EmojiPicker from "emoji-picker-react";
 import { Reply, ThumbsUp } from "lucide-react";
-import { forwardRef, useContext, useEffect, useRef, useState } from "react";
+import { forwardRef, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { IoCallOutline, IoSearchOutline, IoVideocamOutline } from "react-icons/io5";
 import { toast } from "react-toastify";
 import { useClickAway } from "react-use";
@@ -273,7 +273,10 @@ const ChatWindow = () => {
     };
 
 
-    const activeConversation = conversationList.find(conv => conv._id === conversationId);
+    const activeConversation = useMemo(() => {
+        return conversationList.find(conv => conv._id === conversationId);
+    }, [conversationList, conversationId]);
+
 
 
 
@@ -422,7 +425,7 @@ const ChatWindow = () => {
         }
     }, [conversationId, conversationDetail]);
 
-
+    const role = conversationDetail?.data?.data?.role
 
     const sendMessageMutation = useMutation({
         mutationFn: ({ content, msg }: { content: string, msg: any }) => {
@@ -736,12 +739,15 @@ const ChatWindow = () => {
 
 
 
-            {showInfo && (
+            {showInfo && activeConversation && (
                 <ConversationInfoPanel
+                    key={activeConversation._id + activeConversation.updatedAt} // 🔥 ép render mới mỗi khi updatedAt thay đổi
                     onClose={() => setShowInfo(false)}
+                    currentUserRole={role || "member"}
                     conversation={activeConversation}
                 />
             )}
+
 
 
         </div>

@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { Modal } from "antd";
-import { useContext, useEffect } from 'react';
+import { useContext, useEffect, useRef } from 'react';
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { getMyConversations } from './apis/conversation.api';
-import { getUserProfile } from './apis/user.api';
+import { getUserProfile, getUserProfileById } from './apis/user.api';
 import './App.css';
 import CallUI from './components/shared/CallUI';
 import { useCallContext } from './context/CallContext';
@@ -19,9 +19,11 @@ import { Conversation } from './types/conversation';
 function App() {
     const socket = useContext(SocketContext);
     const { setShowCallUI, setCallInfo } = useCallContext();
+    const conversationListRef = useRef<Conversation[]>([]);
 
 
-    const { appendMessage, conversationId, updateConversationList, setConversationList } = useChatContext()
+
+    const { appendMessage, conversationId, setConversationId, updateConversationList, conversationList, setConversationList } = useChatContext()
     const { refetch: refetchUserProfile } = useQuery({
         queryKey: ["userProfile"],
         queryFn: getUserProfile,
@@ -33,15 +35,15 @@ function App() {
     });
 
 
+
+    conversationListRef.current = conversationList;
+
+
+
     useEffect(() => {
         const handleNewMessage = (msg: any) => {
-            console.log("check", msg, conversationId)
             if (msg.conversationId === conversationId) {
                 appendMessage(msg);
-                refetch().then(e => {
-                    console.log(e)
-                    // setConversationList(e.data?.data.data as any)
-                })
             }
         };
 
@@ -54,6 +56,9 @@ function App() {
     useEffect(() => {
         const accessToken = getAccessTokenFromLS();
         if (accessToken) {
+            refetch().then((data) => {
+                setConversationList(data.data?.data.data as Conversation[])
+            })
             refetchUserProfile()
                 .then((result) => {
                     if (result.isSuccess && result.data) {
@@ -73,18 +78,166 @@ function App() {
                             updateConversationList(data)
                         })
 
+
+                        socket.on("group:deleted", ({ groupId }) => {
+                            setConversationList((prev) => prev.filter(conv => conv._id !== groupId));
+
+                            if (conversationId === groupId) {
+                                setConversationId(null);
+                                toast.info("🚫 Nhóm đã bị giải tán");
+                            }
+                        });
+
+
+                        socket.on("group:member-added-group", async ({ groupId, addedUserIds, addedBy: _ }) => {
+                            const currentUserId = result.data.data.data._id;
+
+                            const existingConv = conversationListRef.current.find((c) => c._id === groupId);
+                            if (!existingConv) return;
+
+                            const newProfiles = await Promise.all(
+                                addedUserIds.map((userId: string) => getUserProfileById(userId).then(res => res.data.data))
+                            );
+
+
+                            setConversationList(prev =>
+                                prev.map(conv => {
+                                    if (conv._id !== groupId) return conv;
+
+                                    const currentIds = conv.participants.map(p => p._id);
+                                    const newParticipants = newProfiles.filter(p => !currentIds.includes(p._id));
+
+                                    return {
+                                        ...conv,
+                                        participants: [
+                                            ...conv.participants,
+                                            ...newParticipants.map(p => ({
+                                                ...p,
+                                                label: p.fullName.trim().split(" ").pop() || "Người lạ"
+                                            }))
+                                        ],
+                                        updatedAt: new Date().toISOString()
+                                    };
+                                })
+                            );
+
+                            // Nếu user là người được thêm, hiện toast
+                            if (addedUserIds.includes(currentUserId)) {
+                                toast.success("Bạn vừa được thêm vào nhóm mới!");
+                            }
+                        });
+
+
+
+                        socket.on("group:member-added", async ({ groupId, addedUserId, addedBy: _ }) => {
+                            try {
+                                const { data } = await getUserProfileById(addedUserId);
+
+                                const existingConv = conversationListRef.current.find((conv) => conv._id === groupId);
+                                if (!existingConv) return;
+
+                                const isExisted = existingConv.participants.some(p => p._id === addedUserId);
+                                if (isExisted) return;
+
+                                const updatedConv: Conversation = {
+                                    ...existingConv,
+                                    participants: [
+                                        ...existingConv.participants,
+                                        {
+                                            ...data.data,
+                                        }
+                                    ],
+                                    updatedAt: new Date().toISOString()
+                                };
+
+                                updateConversationList(updatedConv);
+
+                                toast.success(`${data.data.fullName} đã được thêm vào nhóm`);
+                            } catch (err) {
+                                console.error("❌ Lỗi khi fetch thông tin user:", err);
+                            }
+                        });
+
+
+
+
+
+                        socket.on("group:member-removed", ({ groupId, removedUserId, removedBy: _ }) => {
+                            console.log("remove member", groupId, removedUserId)
+                            const currentUserId = result.data.data.data._id;
+
+                            if (removedUserId === currentUserId) {
+                                console.log("fix")
+                                toast.info("Bạn đã bị xoá khỏi nhóm");
+
+                                // Nếu đang mở cuộc trò chuyện đó thì clear
+                                if (conversationId === groupId) {
+                                    setConversationId(null)
+                                    // Có thể gọi setConversationId(null) hoặc chuyển sang màn hình khác
+                                }
+
+                                return;
+                            }
+
+                            // Nếu không phải mình bị xoá thì update lại danh sách participants
+                            const existingConv = conversationListRef.current.find((c) => c._id === groupId);
+                            if (!existingConv) return;
+
+                            const updatedParticipants = existingConv.participants.filter((p) => p._id !== removedUserId);
+
+                            const updatedConversation = {
+                                ...existingConv,
+                                participants: updatedParticipants,
+                                updatedAt: new Date().toISOString(),
+                            };
+
+                            updateConversationList(updatedConversation);
+                        });
+
+
+                        socket.on("group:memberLeft", ({ groupId, leftUserId }) => {
+                            const currentUserId = result.data.data.data._id;
+                            if (leftUserId === currentUserId) {
+                                toast.info("🚪 Bạn đã rời khỏi nhóm");
+
+                                setConversationList(prev => prev.filter(conv => conv._id !== groupId));
+                                if (conversationId === groupId) {
+                                    setConversationId(null);
+                                }
+                                return;
+                            }
+
+                            // Nếu người khác rời nhóm thì update lại danh sách participant
+                            const existingConv = conversationListRef.current.find(conv => conv._id === groupId);
+                            if (!existingConv) return;
+
+                            const updatedConv = {
+                                ...existingConv,
+                                participants: existingConv.participants.filter(p => p._id !== leftUserId),
+                                updatedAt: new Date().toISOString(),
+                            };
+
+                            updateConversationList(updatedConv);
+                            toast.info("Một thành viên đã rời khỏi nhóm");
+                        });
+
+
+
+
                         socket.on("groupCreated", ({ group, message }) => {
-                            const formatted = {
+                            console.log("test groips", group)
+                            const formattedGroup = {
                                 _id: group._id,
                                 type: "group",
                                 name: group.name,
                                 avatar: group.avatar,
                                 participants: group.participants.map((p: any) => ({
-                                    _id: p._id,
-                                    fullName: p.fullName,
-                                    avatar: p.avatar,
-                                    phoneNumber: p.phoneNumber,
-                                    label: p.fullName?.trim().split(" ").pop() || "Người lạ",
+                                    _id: p.user._id,
+                                    fullName: p.user.fullName,
+                                    avatar: p.user.avatar,
+                                    phoneNumber: p.user.phoneNumber,
+                                    role: p.role,
+                                    label: p.user.fullName?.trim().split(" ").pop() || "Người lạ",
                                 })),
                                 lastMessage: {
                                     _id: message._id,
@@ -102,13 +255,14 @@ function App() {
                                     readAt: null,
                                     createdAt: message.createdAt,
                                     updatedAt: message.updatedAt,
-                                    fileMeta: [] as any[],
+                                    fileMeta: [],
                                 },
                                 createdAt: group.createdAt,
                                 updatedAt: group.updatedAt,
                             };
 
-                            updateConversationList(formatted); // hoặc thêm vào state, ví dụ setConversationList([...prev, formatted])
+
+                            updateConversationList(formattedGroup); // hoặc thêm vào state, ví dụ setConversationList([...prev, formatted])
                         });
 
 

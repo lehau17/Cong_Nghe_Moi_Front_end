@@ -95,6 +95,15 @@ const ChatList = () => {
     };
 
 
+    useEffect(() => {
+
+
+        return () => {
+
+        }
+    }, [])
+
+
     const handleSelectGroup = (conv: any) => {
         setConversationId(conv._id);
         setActiveUser({
