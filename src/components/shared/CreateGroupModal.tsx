@@ -1,19 +1,37 @@
+import { createGroup } from "@/apis/conversation-group.api";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useAcceptedFriendRequests } from "@/queries/friend.query";
 import { CameraFilled } from '@ant-design/icons';
+import { useMutation } from "@tanstack/react-query";
 import { SearchIcon } from "lucide-react";
 import { useState } from "react";
 import { IoClose } from "react-icons/io5";
+import { toast } from "react-toastify";
 
 export default function CreateGroupModal({ open, onClose }: { open: boolean, onClose: () => void }) {
     const [selected, setSelected] = useState<string[]>([]);
     const [search, setSearch] = useState("");
     const [sortOrder, _] = useState("A-Z");
+    const [groupName, setGroupName] = useState("");
 
     const { data, isLoading } = useAcceptedFriendRequests(open);
 
     const friends = data?.data?.data || [];
+
+    const createGroupMutation = useMutation({
+        mutationFn: createGroup,
+        onSuccess: () => {
+            toast.success("Tạo nhóm thành công");
+            onClose();
+            setSelected([]);
+            setGroupName("");
+        },
+        onError: () => {
+            toast.error("Tạo nhóm thất bại");
+        }
+    });
+
     // Filter + sort
     const filteredFriends = friends
         .filter((f) => f?.fullName?.toLowerCase().includes(search.toLowerCase()))
@@ -45,16 +63,17 @@ export default function CreateGroupModal({ open, onClose }: { open: boolean, onC
 
 
                 <div className="flex items-center justify-center gap-4">
-
                     <div className="border-b border-black rounded-full w-14 h-12 shadow-md flex items-center justify-center">
                         <CameraFilled size={30} />
                     </div>
                     <Input
-
+                        value={groupName}
+                        onChange={(e) => setGroupName(e.target.value)}
                         placeholder="Nhập tên nhóm..."
                         className="outline-none"
                     />
                 </div>
+
                 <div className="relative rounded-full border-2 flex items-center justify-center " >
                     <SearchIcon size={12} className="ml-4" />
                     <Input
@@ -140,14 +159,17 @@ export default function CreateGroupModal({ open, onClose }: { open: boolean, onC
                     <button className="px-4 py-2 bg-gray-200 rounded mr-2" onClick={onClose}>Hủy</button>
                     <button
                         className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
-                        disabled={selected.length < 2}
+                        disabled={selected.length < 2 || !groupName.trim()}
                         onClick={() => {
-                            console.log("Selected users:", selected);
-                            // TODO: Call API tạo nhóm ở đây
+                            createGroupMutation.mutate({
+                                name: groupName,
+                                members: selected,
+                            });
                         }}
                     >
                         Tạo nhóm
                     </button>
+
 
                 </div>
             </DialogContent>

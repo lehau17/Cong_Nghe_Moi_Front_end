@@ -25,7 +25,13 @@ export type Message = {
         size: string,
         mimeType: string,
         duration?: string
-    },
+    } | {
+        name: string
+        size: number
+        mimeType: string
+        duration?: string | number | undefined
+        url?: string | undefined
+    }[],
     updatedAt: string;
 };
 
@@ -46,6 +52,9 @@ export type MessageCreateBody = {
 
 export type Conversation = {
     _id: string;
+    type?: string
+    name?: string
+    avatar?: string
     participants: UserProfile[];
     lastMessage?: Message;
     createdAt: string;

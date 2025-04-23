@@ -250,7 +250,7 @@ const MessageItem = forwardRef(({
 
 
 const ChatWindow = () => {
-    const { activeUser, conversationId, messages, setMessages } = useChatContext();
+    const { activeUser, messages, setMessages, conversationList, conversationId } = useChatContext();
     const [isComposing, setIsComposing] = useState(false);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [replyTo, setReplyTo] = useState<any>(null);
@@ -271,6 +271,10 @@ const ChatWindow = () => {
     const handlePickOtherFiles = () => {
         fileOtherInputRef.current?.click();
     };
+
+
+    const activeConversation = conversationList.find(conv => conv._id === conversationId);
+
 
 
 
@@ -414,7 +418,7 @@ const ChatWindow = () => {
 
     useEffect(() => {
         if (isSuccess && conversationDetail?.data?.data) {
-            setMessages(conversationDetail.data.data);
+            setMessages(conversationDetail.data.data.messages);
         }
     }, [conversationId, conversationDetail]);
 
@@ -534,11 +538,24 @@ const ChatWindow = () => {
             {/* Header */}
             <div className="flex items-center justify-between p-3 border-b bg-white shadow-sm">
                 <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 rounded-full   border-1 border-black bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-base">
-                        {activeUser.avatar && activeUser.avatar !== "" ? (
-                            <img src={activeUser.avatar} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                    <div className="w-12 h-12 rounded-full border border-black bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-base overflow-hidden">
+                        {(activeConversation?.type === "group"
+                            ? activeConversation?.avatar
+                            : activeUser?.avatar) ? (
+                            <img
+                                src={
+                                    activeConversation?.type === "group"
+                                        ? activeConversation.avatar
+                                        : activeUser.avatar
+                                }
+                                alt="Avatar"
+                                className="w-full h-full object-cover rounded-full"
+                            />
                         ) : (
-                            activeUser.fullName
+                            (activeConversation?.type === "group"
+                                ? activeConversation?.name
+                                : activeUser?.fullName
+                            )
                                 ?.split(" ")
                                 .map((w) => w[0])
                                 .join("")
@@ -547,20 +564,27 @@ const ChatWindow = () => {
                         )}
                     </div>
 
-
                     <div className="ml-3">
-                        <div className="font-semibold text-[16px]">{activeUser.fullName}</div>
-                        <div className="text-sm text-gray-500 text-start">Đang hoạt động</div>
+                        <div className="font-semibold text-[16px] text-start">
+                            {activeConversation?.type === "group"
+                                ? activeConversation?.name
+                                : activeUser?.fullName}
+                        </div>
+                        <div className="text-sm text-gray-500 text-start">
+                            {activeConversation?.type === "group"
+                                ? `${activeConversation?.participants?.length || 0} thành viên`
+                                : "Đang hoạt động"}
+                        </div>
                     </div>
                 </div>
                 <div className="flex items-center space-x-4 text-xl text-gray-600">
                     <IoCallOutline className="cursor-pointer" onClick={handleStartCall} />
-
                     <IoVideocamOutline className="cursor-pointer" />
                     <IoSearchOutline className="cursor-pointer" />
                     <MoreOutlined className="cursor-pointer" onClick={() => setShowInfo(!showInfo)} />
                 </div>
             </div>
+
 
             {/* Messages */}
             <div className="flex-1 min-h-0 flex flex-col overflow-y-auto space-y-2" onClick={() => showInfo && setShowInfo(false)}>
@@ -712,7 +736,14 @@ const ChatWindow = () => {
 
 
 
-            {showInfo && <ConversationInfoPanel onClose={() => setShowInfo(false)} />}
+            {showInfo && (
+                <ConversationInfoPanel
+                    onClose={() => setShowInfo(false)}
+                    conversation={activeConversation}
+                />
+            )}
+
+
         </div>
     );
 };

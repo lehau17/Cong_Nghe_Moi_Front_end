@@ -1,6 +1,12 @@
 
 
 
+export type MessageResponse = {
+    role: string
+    messages: MesageType[]
+}
+
+
 export type MesageType = {
     _id: string;
     conversationId: string;

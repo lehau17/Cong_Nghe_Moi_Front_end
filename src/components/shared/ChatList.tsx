@@ -94,6 +94,19 @@ const ChatList = () => {
         setIsSearching(false);
     };
 
+
+    const handleSelectGroup = (conv: any) => {
+        setConversationId(conv._id);
+        setActiveUser({
+            _id: conv._id,
+            fullName: conv.name,
+            avatar: conv.avatar,
+            type: 'group'
+        });
+        socket.emit("join-room", conv._id);
+    };
+
+
     const handleSelectUser = async (user: UserProfile, _id?: string) => {
         setActiveUser(user);
         if (_id) {
@@ -214,37 +227,50 @@ const ChatList = () => {
                     </div>
                 ) : (
                     conversationList.map((conv) => {
+                        const isGroup = conv.type === "group";
                         const otherUser = conv.participants.find((p) => p._id !== currentUserId);
                         const isActive = conv._id === conversationId;
 
-                        if (!otherUser) return null;
+                        const displayName = isGroup ? conv.name : otherUser?.fullName;
+                        const displayAvatar = isGroup ? conv.avatar : otherUser?.avatar;
+
+                        if (!displayName) return null;
+
                         return (
                             <div
                                 key={conv._id}
-                                onClick={() => handleSelectUser(otherUser, conv._id)}
+                                onClick={() =>
+                                    isGroup
+                                        ? handleSelectGroup(conv)
+                                        : handleSelectUser(otherUser as UserProfile, conv._id)
+                                }
+
                                 className={`flex items-center px-4 py-3 cursor-pointer ${isActive ? "bg-[#dbebff]" : "hover:bg-[#dbebff]"}`}
                             >
                                 <div className="relative w-12 h-12">
-                                    <div className="w-12 h-12 rounded-full border-1 border-black  bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-base">
-                                        {otherUser.avatar || otherUser.avatar !== "" ? (
-                                            <img src={otherUser.avatar} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                                    <div className="w-12 h-12 rounded-full border-1 border-black bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-base overflow-hidden">
+                                        {displayAvatar ? (
+                                            <img src={displayAvatar} alt="Avatar" className="w-full h-full object-cover rounded-full" />
                                         ) : (
-                                            otherUser.fullName
+                                            displayName
                                                 ?.split(" ")
-                                                .map((w) => w[0])
+                                                .map((w: string) => w[0])
                                                 .join("")
                                                 .slice(0, 2)
                                                 .toUpperCase()
                                         )}
                                     </div>
-
                                 </div>
+
                                 <div className="flex-1 ml-3">
                                     <div className="flex justify-between">
-                                        <span className="font-[480] text-[15px]">{otherUser.fullName}</span>
+                                        <span className="font-[480] text-[15px]">{displayName}</span>
                                     </div>
                                     <p className="text-sm text-gray-500 text-start">
-                                        {conv.lastMessage?.sender?.label} : {conv.lastMessage?.type !== "text" ? `[${conv.lastMessage?.type}]` : <span>{conv.lastMessage?.content || "Chưa có tin nhắn"}</span>}
+                                        {conv.lastMessage?.sender?.label} :{" "}
+                                        {conv.lastMessage?.type !== "text" ? `[${conv.lastMessage?.type}]` : (
+                                            <span>{conv.lastMessage?.content || "Chưa có tin nhắn"}</span>
+                                        )}
                                     </p>
                                 </div>
                             </div>

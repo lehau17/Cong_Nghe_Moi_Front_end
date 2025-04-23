@@ -44,7 +44,7 @@ client.on("user-published", async (user: IAgoraRTCRemoteUser, mediaType) => {
     }
 });
 
-// Handle remote user unpublish
+
 client.on("user-unpublished", (user) => {
     const container = document.getElementById(`remote-video-${user.uid}`);
     if (container) container.remove();

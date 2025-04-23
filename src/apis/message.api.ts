@@ -1,8 +1,8 @@
 import http from "@/lib/http";
-import { MesageType } from "@/schemas/message";
+import { MessageResponse } from "@/schemas/message";
 import { SuccessResponse } from "@/types/utils.type";
 
-export const getMessageByConversation = (converId: string) => http.get<SuccessResponse<MesageType[]>>(`/message/${converId}`);
+export const getMessageByConversation = (converId: string) => http.get<SuccessResponse<MessageResponse>>(`/message/${converId}`);
 
 
 export const forwardMessage = (payload: {

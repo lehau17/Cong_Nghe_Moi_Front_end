@@ -5,7 +5,7 @@ import { createContext, useContext, useState } from "react";
 
 interface ChatContextType {
     activeUser: UserProfile | null;
-    setActiveUser: (user: UserProfile | null) => void;
+    setActiveUser: (user: UserProfile | null | any) => void;
     conversationId: string | null;
     setConversationId: (id: string | null) => void;
     setMessages: (messages: any[]) => void;

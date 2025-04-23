@@ -3,6 +3,7 @@ import { Modal } from "antd";
 import { useContext, useEffect } from 'react';
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { getMyConversations } from './apis/conversation.api';
 import { getUserProfile } from './apis/user.api';
 import './App.css';
 import CallUI from './components/shared/CallUI';
@@ -20,16 +21,16 @@ function App() {
     const { setShowCallUI, setCallInfo } = useCallContext();
 
 
-    const { appendMessage, conversationId, updateConversationList } = useChatContext()
+    const { appendMessage, conversationId, updateConversationList, setConversationList } = useChatContext()
     const { refetch: refetchUserProfile } = useQuery({
         queryKey: ["userProfile"],
         queryFn: getUserProfile,
         enabled: false,
     });
-    // const { refetch } = useQuery({
-    //     queryKey: ["myConversations"],
-    //     queryFn: getMyConversations,
-    // });
+    const { refetch } = useQuery({
+        queryKey: ["myConversations"],
+        queryFn: getMyConversations,
+    });
 
 
     useEffect(() => {
@@ -37,6 +38,10 @@ function App() {
             console.log("check", msg, conversationId)
             if (msg.conversationId === conversationId) {
                 appendMessage(msg);
+                refetch().then(e => {
+                    console.log(e)
+                    // setConversationList(e.data?.data.data as any)
+                })
             }
         };
 
@@ -64,8 +69,48 @@ function App() {
                         });
 
                         socket.on("update-chat-list", (data: Conversation) => {
+                            console.log("test update chat list")
                             updateConversationList(data)
                         })
+
+                        socket.on("groupCreated", ({ group, message }) => {
+                            const formatted = {
+                                _id: group._id,
+                                type: "group",
+                                name: group.name,
+                                avatar: group.avatar,
+                                participants: group.participants.map((p: any) => ({
+                                    _id: p._id,
+                                    fullName: p.fullName,
+                                    avatar: p.avatar,
+                                    phoneNumber: p.phoneNumber,
+                                    label: p.fullName?.trim().split(" ").pop() || "Người lạ",
+                                })),
+                                lastMessage: {
+                                    _id: message._id,
+                                    conversationId: message.conversationId,
+                                    sender: {
+                                        _id: message.sender._id,
+                                        fullName: message.sender.fullName,
+                                        avatar: message.sender.avatar,
+                                        phoneNumber: message.sender.phoneNumber,
+                                        label: message.sender.fullName?.trim().split(" ").pop() || "Người lạ",
+                                    },
+                                    type: message.type,
+                                    content: message.content,
+                                    isRead: false,
+                                    readAt: null,
+                                    createdAt: message.createdAt,
+                                    updatedAt: message.updatedAt,
+                                    fileMeta: [] as any[],
+                                },
+                                createdAt: group.createdAt,
+                                updatedAt: group.updatedAt,
+                            };
+
+                            updateConversationList(formatted); // hoặc thêm vào state, ví dụ setConversationList([...prev, formatted])
+                        });
+
 
                         socket.on("incoming-call", ({ from, conversationId, token }) => {
                             setCallInfo({
