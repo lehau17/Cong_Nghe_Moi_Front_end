@@ -53,3 +53,26 @@ export const updateGroupMemberRole = async (
 export const leaveGroup = async (groupId: string) => {
     return await http.post(`/conversationGroup/${groupId}/leave`);
 };
+
+
+export const updateRequireApproval = async (groupId: string) => {
+    return await http.post(`/conversationGroup/${groupId}/toggle-require-approval`);
+};
+
+
+
+
+
+export const getInvitesByGroup = async (groupId: string) => {
+    return await http.get(`/pendingGroupInvite/${groupId}/`);
+};
+
+
+
+export const acceptInvite = async (inviteId: string) => {
+    return await http.post(`/pendingGroupInvite/${inviteId}/accept`);
+};
+
+export const rejectInvite = async (inviteId: string) => {
+    return await http.post(`/pendingGroupInvite/${inviteId}/reject`);
+};

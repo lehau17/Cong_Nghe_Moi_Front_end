@@ -1,11 +1,11 @@
-import { addMembersToGroup, getFriendsNotInGroup, leaveGroup, removeMemberFromGroup, updateGroupMemberRole } from "@/apis/conversation-group.api";
+import { acceptInvite, addMembersToGroup, getFriendsNotInGroup, getInvitesByGroup, leaveGroup, rejectInvite, removeMemberFromGroup, updateGroupMemberRole, updateRequireApproval } from "@/apis/conversation-group.api";
 import { Button } from "@/components/ui/button";
 import { useChatContext } from "@/context/ChatContext";
 import { useUpdateGroupAvatar, useUpdateGroupName } from "@/hooks/useUpdateGroupAvatar";
 import { useDisbandGroup } from "@/queries/conversation.query";
 import { LeftOutlined, MoreOutlined, XOutlined } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Checkbox, Dropdown, Input, Menu } from "antd";
+import { Checkbox, Dropdown, Input, Menu, Switch } from "antd";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { useDebounce } from "react-use";
@@ -37,7 +37,9 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
     const { handleClick, inputRef, handleChange } = useUpdateGroupAvatar(conversation._id, (newAvatar) => {
         setConversationData((prev: any) => ({ ...prev, avatar: newAvatar }));
     });
-    const [panelView, setPanelView] = useState<"info" | "members" | "add-member">("info");
+    type PanelView = "info" | "members" | "add-member" | "pending-approvals";
+    const [panelView, setPanelView] = useState<PanelView>("info");
+
     const [searchText, setSearchText] = useState("")
     const [debouncedSearch, setDebouncedSearch] = useState("")
     const [selectedMembers, setSelectedMembers] = useState<string[]>([])
@@ -140,6 +142,53 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
             toast.error("Thêm thành viên thất bại");
         },
     });
+
+
+    const { data: pendingInvites, refetch: refetchInvites } = useQuery({
+        queryKey: ["pending-invites", conversationData._id],
+        queryFn: () => getInvitesByGroup(conversationData._id),
+        enabled: panelView === "pending-approvals",
+    });
+
+
+
+
+    const acceptInviteMutation = useMutation({
+        mutationFn: (inviteId: string) => acceptInvite(inviteId),
+        onSuccess: () => {
+            toast.success("✅ Đã chấp nhận thành viên");
+            refetchInvites();
+        },
+        onError: () => toast.error("❌ Lỗi khi chấp nhận"),
+    });
+
+    const rejectInviteMutation = useMutation({
+        mutationFn: (inviteId: string) => rejectInvite(inviteId),
+        onSuccess: () => {
+            toast.info("❌ Đã từ chối lời mời");
+            refetchInvites();
+        },
+        onError: () => toast.error("❌ Lỗi khi từ chối"),
+    });
+
+
+
+
+    const [requireApproval, setRequireApproval] = useState<boolean>(conversationData.requireApproval || false);
+
+    const updateApprovalSettingMutation = useMutation({
+        mutationFn: async (value: boolean) => {
+            // Gọi API update cờ requireApproval
+            return await updateRequireApproval(conversationData._id);
+        },
+        onSuccess: (_, value) => {
+            setRequireApproval(value);
+            toast.success(`🎯 Đã ${value ? "bật" : "tắt"} duyệt thành viên`);
+            setConversationData((prev: any) => ({ ...prev, requireApproval: value }));
+        },
+        onError: () => toast.error("❌ Không thể cập nhật cài đặt duyệt thành viên"),
+    });
+
 
 
     const currentConv = conversationList.find((c: any) => c._id === conversationData._id);
@@ -308,6 +357,33 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
                     </div>
 
                 </div>
+            ) : panelView === "pending-approvals" ? (
+                <div className="p-4 space-y-3">
+                    {pendingInvites?.data
+                        ?.filter((invite: any) => invite.status !== "accepted")
+                        .map((invite: any) => (
+                            <div
+                                key={invite._id}
+                                className="flex items-center justify-between bg-gray-50 p-3 rounded shadow-sm"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <img
+                                        src={invite.invitedUser.avatar || "https://via.placeholder.com/40"}
+                                        className="w-10 h-10 rounded-full"
+                                        alt="avatar"
+                                    />
+                                    <div>
+                                        <div className="text-sm font-semibold">{invite.invitedUser.fullName}</div>
+                                        <div className="text-xs text-gray-500">{invite.invitedUser.phoneNumber}</div>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button onClick={() => acceptInviteMutation.mutate(invite._id)}>✔️ Đồng ý</Button>
+                                    <Button variant="destructive" onClick={() => rejectInviteMutation.mutate(invite._id)}>❌ Từ chối</Button>
+                                </div>
+                            </div>
+                        ))}
+                </div>
             ) :
                 (
                     <>
@@ -386,6 +462,14 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
                                     >
                                         ➕ Thêm thành viên
                                     </button>
+                                    {currentUserRole === "owner" && requireApproval && (
+                                        <button
+                                            className="bg-gray-100 px-3 py-2 rounded hover:bg-gray-400 transition"
+                                            onClick={() => setPanelView("pending-approvals")}
+                                        >
+                                            🕒 Xem lời mời chờ duyệt
+                                        </button>
+                                    )}
                                     {currentUserRole !== "owner" && (
                                         <button
                                             className="bg-gray-100 col-span-2 px-3 py-2 rounded hover:bg-red-100 text-red-600 transition"
@@ -427,7 +511,25 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
                                 <span className="text-lg">👥</span>
                                 <span>7 nhóm chung</span>
                             </div>
+
+
+                            <div className="flex items-center justify-between w-full px-4 mt-4">
+                                <div className="flex flex-col text-sm text-gray-700">
+                                    <span>🔒 Duyệt thành viên</span>
+                                    <span className="text-xs text-gray-500">Chỉ owner mới có thể chỉnh</span>
+                                </div>
+
+                                {currentUserRole === "owner" && (
+                                    <Switch
+                                        checked={requireApproval}
+                                        loading={updateApprovalSettingMutation.isPending}
+                                        onChange={(checked) => updateApprovalSettingMutation.mutate(checked)}
+                                    />
+                                )}
+                            </div>
                         </div>
+
+
 
                         {/* Media Section */}
                         <div className="mt-6 px-4 border-b-4 pb-5">
