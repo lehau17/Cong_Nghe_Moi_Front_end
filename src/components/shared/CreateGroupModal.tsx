@@ -159,7 +159,7 @@ export default function CreateGroupModal({ open, onClose }: { open: boolean, onC
                     <button className="px-4 py-2 bg-gray-200 rounded mr-2" onClick={onClose}>Hủy</button>
                     <button
                         className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
-                        disabled={selected.length < 2 || !groupName.trim()}
+                        disabled={selected.length < 1 || !groupName.trim()}
                         onClick={() => {
                             createGroupMutation.mutate({
                                 name: groupName,
