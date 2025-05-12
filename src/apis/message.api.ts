@@ -16,3 +16,11 @@ export const forwardMessage = (payload: {
 export const recallMessage = (messageId: string) => {
     return http.put(`/message/recall/${messageId}`);
 };
+
+
+
+export const sendEmojiApi = (messageId: string, typeEmoji: string) =>
+    http.post(`/message/${messageId}/emoji`, { typeEmoji });
+
+export const revokeEmojiApi = (messageId: string, typeEmoji: string) =>
+    http.delete(`/message/${messageId}/emoji`, { data: { typeEmoji } });

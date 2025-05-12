@@ -1,5 +1,5 @@
 import { sendMessage } from "@/apis/conversation.api";
-import { getMessageByConversation, recallMessage } from "@/apis/message.api";
+import { getMessageByConversation, recallMessage, revokeEmojiApi, sendEmojiApi } from "@/apis/message.api";
 import { Button } from "@/components/ui/button";
 import { useCallContext } from "@/context/CallContext";
 import { useChatContext } from "@/context/ChatContext";
@@ -59,6 +59,10 @@ const MessageItem = forwardRef(({
         },
         onError: () => toast.error("❌ Thu hồi thất bại"),
     });
+
+
+
+
     const moreMenu = (
         <Menu>
             <Menu.Item key="recall" onClick={() => recallMutation.mutate()}>
@@ -172,24 +176,25 @@ const MessageItem = forwardRef(({
 
                         {/* Popup reactions */}
                         {showReactions && (
-                            <div
-                                className={`absolute bottom-6 ${isMine && "right-0"} bg-white shadow-md px-3 py-2 rounded-full flex gap-4 z-30 text-xl reaction-popup`}
-                                onMouseEnter={(e) => {
-                                    e.stopPropagation();
-                                    setShowReactions(true)
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.stopPropagation();
-                                    setShowReactions(false)
-                                }}
-                            >
-                                <span className="cursor-pointer hover:scale-150 transition  text-[18px]">👍</span>
-                                <span className="cursor-pointer hover:scale-150 transition text-[18px]">❤️</span>
-                                <span className="cursor-pointer hover:scale-150 transition text-[18px]">😂</span>
-                                <span className="cursor-pointer hover:scale-150 transition text-[18px]">😢</span>
-                                <span className="cursor-pointer hover:scale-150 transition text-[18px]">😡</span>
+                            <div className="absolute bottom-6 left-0 bg-white shadow-md px-3 py-2 rounded-full flex gap-3 z-30 text-xl reaction-popup">
+                                {["👍", "❤️", "😂", "😢", "😡"].map((emoji) => {
+                                    const reacted = msg.emoji?.[emoji]?.includes(msg.sender._id);
+                                    return (
+                                        <span
+                                            key={emoji}
+                                            onClick={() => {
+                                                const apiCall = reacted ? revokeEmojiApi : sendEmojiApi;
+                                                apiCall(msg._id, emoji).catch(() => toast.error("❌ Gửi emoji thất bại"));
+                                            }}
+                                            className={`cursor-pointer hover:scale-150 transition text-[20px] ${reacted ? "scale-150" : ""}`}
+                                        >
+                                            {emoji}
+                                        </span>
+                                    );
+                                })}
                             </div>
                         )}
+
                     </div>
                 </div>
                 <div className="hidden group-hover:flex items-center gap-1 mx-2">
@@ -519,6 +524,24 @@ const ChatWindow = () => {
     useEffect(() => {
         endRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages, pendingMessage, pendingImages, pendingFiles]);
+
+
+
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleEmojiUpdate = (updatedMsg: any) => {
+            setMessages((prev) =>
+                prev.map((msg) => (msg._id === updatedMsg._id ? updatedMsg : msg))
+            );
+        };
+
+        socket.on("emoji-updated", handleEmojiUpdate);
+
+        return () => {
+            socket.off("emoji-updated", handleEmojiUpdate);
+        };
+    }, [socket]);
 
 
     const allMessages = [...messages];

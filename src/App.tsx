@@ -23,7 +23,7 @@ function App() {
 
 
 
-    const { appendMessage, conversationId, setConversationId, updateConversationList, conversationList, setConversationList } = useChatContext()
+    const { appendMessage, setMessages, conversationId, setConversationId, updateConversationList, conversationList, setConversationList } = useChatContext()
     const { refetch: refetchUserProfile } = useQuery({
         queryKey: ["userProfile"],
         queryFn: getUserProfile,
@@ -48,6 +48,51 @@ function App() {
         };
 
         socket.on("new-message", handleNewMessage);
+
+
+        // socket.on("emoji-updated", (updatedMessage) => {
+        //     if (updatedMessage.conversationId !== conversationId) return
+        //     setMessages(prev =>
+        //         prev.map(m => m._id === updatedMessage._id ? { ...m, ...updatedMessage } : m)
+        //     );
+        // });
+
+
+        socket.on("message-recalled", (updatedMessage) => {
+
+            console.log("=>>> Recall Message : >>>", updatedMessage)
+            setMessages((prevMessages) =>
+                prevMessages.map((msg) =>
+                    msg._id === updatedMessage._id ? { ...msg, ...updatedMessage } : msg
+                )
+            );
+
+
+            setConversationList((prevList) =>
+                prevList.map((conv) => {
+                    if (conv._id !== updatedMessage.conversationId) return conv;
+
+                    if (conv.lastMessage && conv.lastMessage._id === updatedMessage._id) {
+                        return {
+                            ...conv,
+                            lastMessage: {
+                                ...conv.lastMessage,
+                                ...updatedMessage,
+                                sender: {
+                                    ...updatedMessage.sender,
+                                    label: updatedMessage.sender.fullName.trim().split(" ").pop() || "Người lạ"
+
+                                }
+                            },
+                            updatedAt: new Date().toISOString(),
+                        };
+                    }
+
+                    return conv;
+                })
+            );
+        });
+
 
         return () => {
             socket.off("new-message", handleNewMessage);

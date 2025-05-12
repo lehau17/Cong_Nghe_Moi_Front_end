@@ -8,7 +8,7 @@ interface ChatContextType {
     setActiveUser: (user: UserProfile | null | any) => void;
     conversationId: string | null;
     setConversationId: (id: string | null) => void;
-    setMessages: (messages: any[]) => void;
+    setMessages: React.Dispatch<React.SetStateAction<any[]>>
     messages: any[];
     appendMessage: (msg: any) => void;
     conversationList: Conversation[];

@@ -276,7 +276,7 @@ const ChatList = () => {
                                         <span className="font-[480] text-[15px]">{displayName}</span>
                                     </div>
                                     <p className="text-sm text-gray-500 text-start">
-                                        {conv.lastMessage?.sender?.label} :{" "}
+                                        {conv.lastMessage?.sender?.label} :{""}
                                         {conv.lastMessage?.type !== "text" ? `[${conv.lastMessage?.type}]` : (
                                             <span>{conv.lastMessage?.content || "Chưa có tin nhắn"}</span>
                                         )}
