@@ -53,15 +53,15 @@ export default function ProfileModal({ open, onClose, user }: Props) {
                     <div className="mt-4 px-4 border-b-3 shadow-sm pb-4">
                         <h3 className="text-sm font-bold text-gray-600 mb-1 ">Thông tin cá nhân</h3>
                         <div className="text-sm text-gray-800 space-y-1">
-                            <div className="flex flex">
+                            <div className="flex ">
                                 <span className="font-thin text-[gray] w-[30%]">Giới tính</span>
                                 <p>{mockUser?.gender}</p>
                             </div>
-                            <div className="flex flex">
+                            <div className="flex">
                                 <span className="font-thin text-[gray] w-[30%]">Ngày sinh</span>
                                 <p>{mockUser?.dob}</p>
                             </div>
-                            <div className="flex flex">
+                            <div className="flex">
                                 <span className="font-thin text-[gray] w-[30%]">Điện thoại</span>
                                 <p>{mockUser?.phoneNumber}</p>
                             </div>

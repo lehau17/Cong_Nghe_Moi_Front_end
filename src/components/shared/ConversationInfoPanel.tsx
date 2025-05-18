@@ -177,7 +177,7 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
     const [requireApproval, setRequireApproval] = useState<boolean>(conversationData.requireApproval || false);
 
     const updateApprovalSettingMutation = useMutation({
-        mutationFn: async (value: boolean) => {
+        mutationFn: async (_: boolean) => {
             // Gọi API update cờ requireApproval
             return await updateRequireApproval(conversationData._id);
         },

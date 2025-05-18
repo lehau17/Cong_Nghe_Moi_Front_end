@@ -5,6 +5,10 @@ export const sendFriendRequest = (to: string) => {
     return http.post("/friend-request/send", { to });
 };
 
+export const rejectFriendRequest = (id: string) => {
+    return http.post(`/friend-request/reject/${id}`)
+}
+
 
 
 export const fetchPendingFriendRequests = async () => {

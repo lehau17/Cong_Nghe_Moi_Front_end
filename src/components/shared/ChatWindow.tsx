@@ -1,35 +1,39 @@
 import { sendMessage } from "@/apis/conversation.api";
 import { getMessageByConversation, recallMessage, revokeEmojiApi, sendEmojiApi } from "@/apis/message.api";
-import { Button } from "@/components/ui/button";
 import { useCallContext } from "@/context/CallContext";
 import { useChatContext } from "@/context/ChatContext";
 import { SocketContext } from "@/context/SocketContext";
 import http from "@/lib/http";
 import { useUploadAudioMessage, useUploadMultiFileMessage, useUploadMultiImageMessage } from "@/queries/upload.query";
 import { agoraService } from "@/services/agoraService";
+import { UserProfile } from "@/types/user.type";
 import {
     AudioOutlined,
     MoreOutlined, PaperClipOutlined, PictureOutlined, SendOutlined, ShareAltOutlined, SmileOutlined
 } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Avatar, Dropdown, Menu, Tooltip } from "antd";
+import { Avatar, Button, Dropdown, Menu, Tooltip } from "antd";
 import EmojiPicker from "emoji-picker-react";
-import { Reply, ThumbsUp } from "lucide-react";
+import { Reply } from "lucide-react";
 import { forwardRef, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { IoCallOutline, IoSearchOutline, IoVideocamOutline } from "react-icons/io5";
 import { toast } from "react-toastify";
 import { useClickAway } from "react-use";
 import ConversationInfoPanel from "./ConversationInfoPanel";
+import EmojiDisplay from "./EmojiDisplay";
 import { FilePreview } from "./FilePreview";
 import ForwardModal from "./ForwardModal";
 import ImageModal from "./ImageModal";
 import ProfileModal from "./ProfileModel";
 const pulseBars = Array.from({ length: 5 });
 
+const emojis = ["👍", "❤️", "😂", "😢", "😡"];
+
+
 
 const MessageItem = forwardRef(({
     msg, isLast, isMine, setReplyTo, scrollToMessage, isShowAvatar,
-    onForward,
+    onForward, userList, currentUserId
 }: {
     msg: any;
     isLast: boolean;
@@ -41,13 +45,15 @@ const MessageItem = forwardRef(({
     isSelected: boolean;
     onToggleSelected: () => void;
     onForward: (msg: any) => void;
+    userList: UserProfile[];
+    currentUserId: any
 
 }, ref: React.Ref<HTMLDivElement>) => {
     const [showMeta, setShowMeta] = useState(false);
     const isAudio = msg.type === "audio";
     const isImage = msg.type === "image";
+    const [visible, setVisible] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
-    const [showReactions, setShowReactions] = useState(false);
     const [openProfile, setOpenProfile] = useState(false);
     const { updateChatList } = useChatContext()
     const recallMutation = useMutation({
@@ -62,6 +68,31 @@ const MessageItem = forwardRef(({
 
 
 
+    const handleEmojiClick = async (emoji: string) => {
+        const reacted = msg.emoji?.[emoji]?.includes(currentUserId);
+
+        try {
+            const apiCall = reacted ? revokeEmojiApi : sendEmojiApi;
+            await apiCall(msg._id, emoji);
+            toast.success(reacted ? "🗑️ Đã gỡ cảm xúc" : `✨ Đã thả ${emoji}`);
+        } catch {
+            toast.error("❌ Thao tác thất bại");
+        }
+    };
+
+    // Tạo Menu dropdown cho Emoji
+    const emojiMenu = (
+        <div className="flex items-center justify-between gap-4 bg-white px-4 py-2 rounded-2xl">
+            {emojis.map((emoji) => (
+                <div key={emoji} onClick={() => handleEmojiClick(emoji)} className="cursor-pointer">
+                    <span className="text-lg">{emoji}</span>
+                </div>
+            ))}
+        </div>
+    );
+
+
+
 
     const moreMenu = (
         <Menu>
@@ -71,8 +102,8 @@ const MessageItem = forwardRef(({
         </Menu>
     );
     return (
-        <div ref={ref} className={`group flex flex-col relative mb-1 ${isMine ? "items-end pr-3" : "items-start pl-3"}`}>
-            <div className={`flex items-center ${isMine ? "flex-row-reverse" : "flex-row"}`}>
+        <div ref={ref} className={`group flex flex-col relative mb-1 my-2  ${isMine ? "items-end pr-3" : "items-start pl-3"}`}>
+            <div className={`flex items-center  ${isMine ? "flex-row-reverse" : "flex-row"}`}>
                 {!isMine && isShowAvatar && (
                     <div className="mr-2">
                         <Avatar
@@ -101,8 +132,10 @@ const MessageItem = forwardRef(({
                             return; // ❌ Không toggle showMeta nếu nhấn vào phần reaction
                         }
                         setShowMeta(!showMeta);
+
                     }}
-                    className={`px-4 py-2 rounded-sm break-words relative cursor-pointer ${isMine ? "bg-[#dbebff] text-black" : "bg-gray-200 text-black"} ${msg.isRevoke && "text-gray"}`}
+                    className={`px-4 py-2 rounded-sm break-words relative cursor-pointer ${isMine ? "bg-[#dbebff] text-black " : "bg-gray-200 text-black "} ${msg.isRevoke && "text-gray"}`}
+                    style={{ minWidth: "200px" }}
                 >
                     {msg.replyTo && (
                         <div
@@ -155,65 +188,76 @@ const MessageItem = forwardRef(({
                     ) : (
                         <span className={`${msg.isRevoke && "text-[gray] font-thin  "}`}>{msg.content} </span>
                     )}
-                    {/* 👍 Reaction Button – chỉ hiển thị khi hover tin nhắn */}
+
                     <div
-                        className={`absolute ${isMine ? "right-[8px]" : "left-[8px]"} bottom-[-10px] z-20`}
-                        onMouseEnter={(e) => {
-                            e.stopPropagation();
-                            setShowReactions(true)
-                        }}
-                        onMouseLeave={(e) => {
-                            e.stopPropagation();
-                            setShowReactions(false)
-                        }}
+                        className={`absolute ${isMine ? "right-[10px]" : "left-[70px]"} bottom-[-10px] flex gap-1`}
                     >
-                        {/* Nút 👍 – ẩn mặc định, hiện khi hover vào bubble */}
-                        <div className="hidden group-hover:block reaction-button">
-                            <div className="w-6 h-6 bg-white rounded-full shadow flex items-center justify-center cursor-pointer">
-                                <ThumbsUp size={14} strokeWidth={0.75} />
-                            </div>
-                        </div>
-
-                        {/* Popup reactions */}
-                        {showReactions && (
-                            <div className="absolute bottom-6 left-0 bg-white shadow-md px-3 py-2 rounded-full flex gap-3 z-30 text-xl reaction-popup">
-                                {["👍", "❤️", "😂", "😢", "😡"].map((emoji) => {
-                                    const reacted = msg.emoji?.[emoji]?.includes(msg.sender._id);
-                                    return (
-                                        <span
-                                            key={emoji}
-                                            onClick={() => {
-                                                const apiCall = reacted ? revokeEmojiApi : sendEmojiApi;
-                                                apiCall(msg._id, emoji).catch(() => toast.error("❌ Gửi emoji thất bại"));
-                                            }}
-                                            className={`cursor-pointer hover:scale-150 transition text-[20px] ${reacted ? "scale-150" : ""}`}
-                                        >
-                                            {emoji}
-                                        </span>
-                                    );
-                                })}
-                            </div>
-                        )}
-
+                        <EmojiDisplay msg={msg} userList={userList} />
                     </div>
+
+
+
+
+
                 </div>
                 <div className="hidden group-hover:flex items-center gap-1 mx-2">
+                    {/* 🗨️ Trả lời */}
                     <Tooltip title="Trả lời">
-                        <div className="w-7 h-7 rounded-full bg-white shadow flex items-center justify-center hover:bg-gray-200 cursor-pointer" onClick={() => setReplyTo(msg)}>
+                        <div
+                            className="w-7 h-7 rounded-full bg-white shadow flex items-center justify-center hover:bg-gray-200 cursor-pointer"
+                            onClick={() => setReplyTo(msg)}
+                        >
                             <Reply className="text-sm" />
                         </div>
                     </Tooltip>
+
+                    {/* 📤 Chia sẻ */}
                     <Tooltip title="Chia sẻ">
-                        <div className="w-7 h-7 rounded-full bg-white shadow flex items-center justify-center hover:bg-gray-200 cursor-pointer" onClick={() => onForward(msg)}>
+                        <div
+                            className="w-7 h-7 rounded-full bg-white shadow flex items-center justify-center hover:bg-gray-200 cursor-pointer"
+                            onClick={() => onForward(msg)}
+                        >
                             <ShareAltOutlined className="text-sm" />
                         </div>
                     </Tooltip>
-                    {isMine && <Dropdown overlay={moreMenu} trigger={['click']}>
-                        <div className="w-7 h-7 rounded-full bg-white shadow flex items-center justify-center hover:bg-gray-200 cursor-pointer">
-                            <MoreOutlined className="text-sm" />
-                        </div>
-                    </Dropdown>}
+
+                    {/* ❤️ Thả cảm xúc */}
+                    <Dropdown
+                        overlay={(
+                            <div className="flex items-center justify-between gap-4 bg-white px-4 py-2 rounded-2xl">
+                                {emojis.map((emoji) => (
+                                    <div
+                                        key={emoji}
+                                        onClick={() => handleEmojiClick(emoji)}
+                                        className="cursor-pointer hover:bg-gray-100 p-1 rounded-full transition"
+                                    >
+                                        <span className="text-lg">{emoji}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        trigger={['click']}
+                        placement="top"
+                    >
+                        <Tooltip title="Thả cảm xúc">
+                            <div
+                                className="w-7 h-7 rounded-full bg-white shadow flex items-center justify-center hover:bg-gray-200 cursor-pointer"
+                            >
+                                <SmileOutlined className="text-sm" />
+                            </div>
+                        </Tooltip>
+                    </Dropdown>
+
+                    {/* ⬇️ More Actions */}
+                    {isMine && (
+                        <Dropdown overlay={moreMenu} trigger={['click']}>
+                            <div className="w-7 h-7 rounded-full bg-white shadow flex items-center justify-center hover:bg-gray-200 cursor-pointer">
+                                <MoreOutlined className="text-sm" />
+                            </div>
+                        </Dropdown>
+                    )}
                 </div>
+
             </div>
             {(isLast || showMeta) && (
                 <>
@@ -482,6 +526,8 @@ const ChatWindow = () => {
 
 
 
+
+
     const handleSend = () => {
         if (!input.trim() || !conversationId) return;
         sendMessageMutation.mutate({
@@ -495,6 +541,13 @@ const ChatWindow = () => {
             }
         });
     };
+
+
+
+
+    // Lấy danh sách participants
+    const participants = activeConversation?.participants || [];
+
 
     const startRecording = async () => {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -632,6 +685,7 @@ const ChatWindow = () => {
                                 <MessageItem
                                     ref={(el) => { messageRefs.current[msg._id] = el; }} // ✅ Không return gì cả
                                     // 👈 Gắn đúng ref ở đây
+                                    currentUserId
                                     key={msg._id}
                                     msg={msg}
                                     isLast={isLast}
@@ -643,6 +697,7 @@ const ChatWindow = () => {
                                     onForward={(msg) => setForwardMessage(msg)}
                                     isSelected={!!selectedMessages.find(m => m._id === msg._id)}
                                     onToggleSelected={() => toggleSelectedMessage(msg)}
+                                    userList={participants}
                                 />
 
                             </div>
@@ -747,7 +802,7 @@ const ChatWindow = () => {
                             className="w-full bg-gray-100 p-2 rounded-xl border border-gray-300 outline-none"
                         />
                     </div>
-                    <Button variant="ghost" size="icon" onClick={handleSend}>
+                    <Button onClick={handleSend}>
                         <SendOutlined />
                     </Button>
                 </div>

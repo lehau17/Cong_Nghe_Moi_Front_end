@@ -30,7 +30,15 @@ export const useAcceptFriendRequest = (options?: UseMutationOptions<any, unknown
 export const useRejectFriendRequest = (options?: UseMutationOptions<any, unknown, string>) => {
     return useMutation({
         mutationFn: (id: string) => http.put(`/friend-request/reject/${id}`),
-        onSuccess: () => { toast.info("Huỷ lời mời kết bạn thành công.") },
+
         ...options,
     });
 };
+
+
+export const useDeleteFriendShip = (options?: UseMutationOptions<any, unknown, string>) => {
+    return useMutation({
+        mutationFn: (id: string) => http.delete(`/friend-request/${id}`),
+        ...options
+    })
+}

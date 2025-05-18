@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { useAcceptedFriendRequests } from "@/queries/friend.query";
 import { CameraFilled } from '@ant-design/icons';
 import { useMutation } from "@tanstack/react-query";
+import { Button } from "antd";
 import { SearchIcon } from "lucide-react";
 import { useState } from "react";
 import { IoClose } from "react-icons/io5";
@@ -50,17 +51,22 @@ export default function CreateGroupModal({ open, onClose }: { open: boolean, onC
         grouped[letter].push(friend);
     }
 
-
-
-
     const groupedFriends = Object.entries(grouped).sort(([a], [b]) =>
         sortOrder === "A-Z" ? a.localeCompare(b) : b.localeCompare(a)
     );
+
+    // Xử lý tạo nhóm với trạng thái loading
+    const handleCreateGroup = () => {
+        createGroupMutation.mutate({
+            name: groupName,
+            members: selected,
+        });
+    };
+
     return (
         <Dialog open={open} onOpenChange={onClose}>
             <DialogContent className="max-w-md">
                 <DialogTitle className="text-lg font-semibold pb-3 border-b-2">Tạo nhóm</DialogTitle>
-
 
                 <div className="flex items-center justify-center gap-4">
                     <div className="border-b border-black rounded-full w-14 h-12 shadow-md flex items-center justify-center">
@@ -74,13 +80,12 @@ export default function CreateGroupModal({ open, onClose }: { open: boolean, onC
                     />
                 </div>
 
-                <div className="relative rounded-full border-2 flex items-center justify-center " >
+                <div className="relative rounded-full border-2 flex items-center justify-center mt-4">
                     <SearchIcon size={12} className="ml-4" />
                     <Input
                         placeholder="Nhập tên, số điện thoại, hoặc danh sách"
                         value={search}
                         className="border-none outline-none"
-
                         onChange={(e) => setSearch(e.target.value)}
                     />
                     {search && (
@@ -89,13 +94,6 @@ export default function CreateGroupModal({ open, onClose }: { open: boolean, onC
                             onClick={() => setSearch("")}
                         />
                     )}
-                </div>
-
-                <div className="flex gap-2 text-sm mt-3 overflow-x-auto whitespace-nowrap">
-                    <button className="px-2 py-1 rounded-full bg-blue-100 text-blue-600 font-medium">Tất cả</button>
-                    <button className="px-2 py-1 rounded-full bg-gray-100">Khách hàng</button>
-                    <button className="px-2 py-1 rounded-full bg-gray-100">Gia đình</button>
-                    <button className="px-2 py-1 rounded-full bg-gray-100">Công việc</button>
                 </div>
 
                 <div className="mt-4 max-h-80 overflow-auto">
@@ -149,28 +147,23 @@ export default function CreateGroupModal({ open, onClose }: { open: boolean, onC
                                         </label>
                                     );
                                 })}
-
                             </div>
                         ))
                     )}
                 </div>
 
                 <div className="flex justify-end mt-4">
-                    <button className="px-4 py-2 bg-gray-200 rounded mr-2" onClick={onClose}>Hủy</button>
-                    <button
-                        className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50"
+                    <Button className="mr-2" onClick={onClose}>
+                        Hủy
+                    </Button>
+                    <Button
+                        type="primary"
+                        loading={createGroupMutation.isPending}
                         disabled={selected.length < 1 || !groupName.trim()}
-                        onClick={() => {
-                            createGroupMutation.mutate({
-                                name: groupName,
-                                members: selected,
-                            });
-                        }}
+                        onClick={handleCreateGroup}
                     >
                         Tạo nhóm
-                    </button>
-
-
+                    </Button>
                 </div>
             </DialogContent>
         </Dialog>

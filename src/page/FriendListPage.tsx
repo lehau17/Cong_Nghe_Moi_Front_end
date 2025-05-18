@@ -1,16 +1,23 @@
 import Header from "@/components/shared/Header";
-import { useAcceptedFriendRequests } from "@/queries/friend.query";
-import { DashOutlined, SearchOutlined } from "@ant-design/icons";
-import { Input, Select } from "antd";
-import { useState } from "react";
+import ProfileModal from "@/components/shared/ProfileModel";
+import { SocketContext } from "@/context/SocketContext";
+import { useAcceptedFriendRequests, useDeleteFriendShip } from "@/queries/friend.query";
+import { DashOutlined, ExclamationCircleOutlined, SearchOutlined } from "@ant-design/icons";
+import { Dropdown, Input, Menu, message, Modal, Select } from "antd";
+import { useContext, useEffect, useState } from "react";
 
 const FriendListPage = () => {
     const [search, setSearch] = useState("");
     const [sortOrder, setSortOrder] = useState("A-Z");
+    const { mutate } = useDeleteFriendShip();
+    const socket = useContext(SocketContext);
+    const [openProfile, setOpenProfile] = useState<boolean>(false)
+    const [userSelect, setUserSelect] = useState<string>('')
 
-    const { data } = useAcceptedFriendRequests();
+    const { data, refetch } = useAcceptedFriendRequests();
 
     const friends = data?.data?.data || [];
+
     // Filter + sort
     const filteredFriends = friends
         .filter((f) => f?.fullName?.toLowerCase().includes(search.toLowerCase()))
@@ -20,7 +27,6 @@ const FriendListPage = () => {
                 : b?.fullName.localeCompare(a?.fullName)
         );
 
-
     // Group by first letter
     const grouped: Record<string, any[]> = {};
     for (const friend of filteredFriends) {
@@ -29,11 +35,101 @@ const FriendListPage = () => {
         grouped[letter].push(friend);
     }
 
-
-
-
     const groupedFriends = Object.entries(grouped).sort(([a], [b]) =>
         sortOrder === "A-Z" ? a.localeCompare(b) : b.localeCompare(a)
+    );
+
+    // Handler actions
+    const { confirm } = Modal;
+
+    const handleMenuClick = (action: string, fs_id: string, friend_id: string) => {
+        switch (action) {
+            case "view_info":
+                setUserSelect(friend_id)
+                setOpenProfile(true)
+                break;
+            case "block_user":
+                console.log(`Chặn người dùng ID: ${fs_id}`);
+                break;
+            case "remove_friend":
+                showConfirmDelete(fs_id);
+                break;
+            default:
+                break;
+        }
+    };
+
+
+    const showConfirmDelete = (friendId: string) => {
+        confirm({
+            title: `Xác nhận huỷ kết bạn`,
+            content: "Bạn có chắc chắn muốn huỷ kết bạn? Hành động này không thể hoàn tác.",
+            okText: "Xác nhận",
+            cancelText: "Huỷ",
+            onOk() {
+                return new Promise((resolve, reject) => {
+                    mutate(friendId, {
+                        onSuccess: () => {
+                            message.success("Huỷ kết bạn thành công.");
+                            resolve(true);
+                        },
+                        onError: () => {
+                            message.error("Có lỗi xảy ra. Vui lòng thử lại.");
+                            reject();
+                        },
+                    });
+                });
+            },
+            onCancel() {
+                console.log("Huỷ thao tác");
+            },
+        });
+    };
+
+
+    useEffect(() => {
+        socket.on("delete-friendship", (_: string) => {
+            refetch();
+        });
+
+        return () => {
+            socket.off("delete-friendship");
+        };
+    }, [socket, refetch]);
+
+
+
+    const renderMenu = (fs_id: string, friend_id: string) => (
+        <Menu
+            onClick={(e) => handleMenuClick(e.key, fs_id, friend_id)}
+            items={[
+                {
+                    label: "Xem thông tin",
+                    key: "view_info",
+                },
+                {
+                    type: "divider" // Thêm dòng chia
+                },
+                {
+                    label: (
+                        <span style={{ color: "red" }}>
+                            <ExclamationCircleOutlined style={{ marginRight: 5 }} />
+                            Chặn người này
+                        </span>
+                    ),
+                    key: "block_user",
+                },
+                {
+                    label: (
+                        <span style={{ color: "red" }}>
+                            <ExclamationCircleOutlined style={{ marginRight: 5 }} />
+                            Xóa kết bạn
+                        </span>
+                    ),
+                    key: "remove_friend",
+                },
+            ]}
+        />
     );
 
 
@@ -77,7 +173,7 @@ const FriendListPage = () => {
                                 key={friend._id}
                                 className="flex items-center px-5 py-3 cursor-pointer hover:bg-gray-100"
                             >
-                                <div className="w-12 h-12 rounded-full  border-1 border-black  bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-sm">
+                                <div className="w-12 h-12 rounded-full border-1 border-black bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-sm">
                                     {friend.avatar && friend.avatar !== "" ? (
                                         <img src={friend.avatar} className="w-full h-full object-cover rounded-full" alt="avatar" />
                                     ) : (
@@ -91,13 +187,21 @@ const FriendListPage = () => {
                                 </div>
                                 <div className="flex items-center justify-between h-full w-full p-2">
                                     <span className="text-sm font-semibold text-start">{friend.fullName}</span>
-                                    <DashOutlined />
+                                    <Dropdown overlay={renderMenu(friend.fs_id, friend._id)} trigger={['click']}>
+                                        <DashOutlined className="cursor-pointer" />
+                                    </Dropdown>
                                 </div>
                             </div>
                         ))}
                     </div>
                 ))}
             </div>
+            <ProfileModal
+                open={openProfile}
+                onClose={() => setOpenProfile(false)}
+                user={userSelect}
+            />
+
         </div>
     );
 };
