@@ -52,7 +52,6 @@ const MessageItem = forwardRef(({
     const [showMeta, setShowMeta] = useState(false);
     const isAudio = msg.type === "audio";
     const isImage = msg.type === "image";
-    const [visible, setVisible] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
     const [openProfile, setOpenProfile] = useState(false);
     const { updateChatList } = useChatContext()
@@ -79,19 +78,6 @@ const MessageItem = forwardRef(({
             toast.error("❌ Thao tác thất bại");
         }
     };
-
-    // Tạo Menu dropdown cho Emoji
-    const emojiMenu = (
-        <div className="flex items-center justify-between gap-4 bg-white px-4 py-2 rounded-2xl">
-            {emojis.map((emoji) => (
-                <div key={emoji} onClick={() => handleEmojiClick(emoji)} className="cursor-pointer">
-                    <span className="text-lg">{emoji}</span>
-                </div>
-            ))}
-        </div>
-    );
-
-
 
 
     const moreMenu = (
