@@ -53,11 +53,11 @@ const FriendRequestPage = () => {
                             className="flex items-center justify-between border-b pb-3"
                         >
                             <div className="flex items-center gap-3">
-                                <Avatar size={48} src={req.from?.avatar}>
-                                    {req.from.fullName?.charAt(0).toUpperCase()}
+                                <Avatar size={48} src={req.user?.avatar}>
+                                    {req.user?.fullName?.charAt(0).toUpperCase()}
                                 </Avatar>
                                 <div>
-                                    <div className="font-semibold">{req.from.fullName}</div>
+                                    <div className="font-semibold">{req.user?.fullName}</div>
                                     <div className="text-xs text-gray-500">
                                         Gửi lúc {dayjs(req.createdAt).format("HH:mm DD/MM/YYYY")}
                                     </div>
@@ -67,10 +67,10 @@ const FriendRequestPage = () => {
                                 <Button
                                     size="sm"
                                     className="bg-green-500 hover:bg-green-600 text-white"
-                                    onClick={() => handleAccept(req._id)}
-                                    disabled={loadingId === req._id} // Vô hiệu hóa khi đang loading
+                                    onClick={() => handleAccept(req.requestId)}
+                                    disabled={loadingId === req.requestId} // Vô hiệu hóa khi đang loading
                                 >
-                                    {loadingId === req._id && acceptMutation.isPending ? (
+                                    {loadingId === req.requestId && acceptMutation.isPending ? (
                                         <Spin size="small" />
                                     ) : (
                                         <CheckOutlined />
@@ -80,8 +80,8 @@ const FriendRequestPage = () => {
                                 <Button
                                     size="sm"
                                     className="bg-red-500 hover:bg-red-600 text-white"
-                                    onClick={() => handleReject(req._id)}
-                                    disabled={loadingId === req._id}
+                                    onClick={() => handleReject(req.requestId)}
+                                    disabled={loadingId === req.requestId}
                                 >
                                     {loadingId === req._id && rejectMutation.isPending ? (
                                         <Spin size="small" />

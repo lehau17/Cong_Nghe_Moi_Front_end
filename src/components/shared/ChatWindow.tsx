@@ -651,7 +651,7 @@ const ChatWindow = () => {
 
 
             {/* Messages */}
-            <div className="flex-1 min-h-0 flex flex-col overflow-y-auto space-y-2" onClick={() => showInfo && setShowInfo(false)}>
+            <div className="flex-1 min-h-0 flex flex-col overflow-y-auto" onClick={() => showInfo && setShowInfo(false)}>
                 {isLoading ? (
                     <div className="text-gray-500 italic">Đang tải tin nhắn...</div>
                 ) : (
