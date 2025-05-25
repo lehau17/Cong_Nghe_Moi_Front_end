@@ -29,7 +29,7 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
     const isGroup = conversation?.type === "group";
     const [conversationData, setConversationData] = useState(conversation);
     const [isEditingName, setIsEditingName] = useState(false);
-    const [newName, setNewName] = useState(conversationData.name || conversationData.fullName);
+    const [newName, setNewName] = useState(conversationData.name || conversationData.participants.find((e: any) => e._id !== currentUserId)?.fullName);
     const { updateName } = useUpdateGroupName(conversation._id, (updatedName: string) => {
         setConversationData((prev: any) => ({ ...prev, name: updatedName, fullName: updatedName }));
         setIsEditingName(false);
@@ -486,14 +486,6 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
                             )}
 
                             <div className="grid grid-cols-3 gap-4 mt-5 text-center text-sm">
-                                <div className="flex flex-col items-center text-gray-600">
-                                    <span className="text-xl">🔕</span>
-                                    <span>Tắt thông báo</span>
-                                </div>
-                                <div className="flex flex-col items-center text-blue-600">
-                                    <span className="text-xl">📌</span>
-                                    <span>Ghim hội thoại</span>
-                                </div>
                                 <div className="flex flex-col items-center text-gray-600">
                                     <span className="text-xl">👥</span>
                                     <span>Tạo nhóm trò chuyện</span>

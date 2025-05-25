@@ -1,11 +1,12 @@
 import { sendMessage } from "@/apis/conversation.api";
-import { getMessageByConversation, recallMessage, revokeEmojiApi, sendEmojiApi } from "@/apis/message.api";
+import { getMessageByConversation, recallMessage, revokeEmojiApiAll, toggleEmojiApi } from "@/apis/message.api";
 import { useCallContext } from "@/context/CallContext";
 import { useChatContext } from "@/context/ChatContext";
 import { SocketContext } from "@/context/SocketContext";
 import http from "@/lib/http";
 import { useUploadAudioMessage, useUploadMultiFileMessage, useUploadMultiImageMessage } from "@/queries/upload.query";
 import { agoraService } from "@/services/agoraService";
+
 import { UserProfile } from "@/types/user.type";
 import {
     AudioOutlined,
@@ -69,15 +70,23 @@ const MessageItem = forwardRef(({
 
     const handleEmojiClick = async (emoji: string) => {
         const reacted = msg.emoji?.[emoji]?.includes(currentUserId);
-
+        console.log("Check da tha hay chua:>>>", reacted)
         try {
-            const apiCall = reacted ? revokeEmojiApi : sendEmojiApi;
+            const apiCall = reacted ? toggleEmojiApi : toggleEmojiApi;
             await apiCall(msg._id, emoji);
-            toast.success(reacted ? "🗑️ Đã gỡ cảm xúc" : `✨ Đã thả ${emoji}`);
         } catch {
             toast.error("❌ Thao tác thất bại");
         }
     };
+
+
+    const removeAllEmojiForMe = async () => {
+        try {
+            await revokeEmojiApiAll(msg._id)
+        } catch (error) {
+            toast.error("Error")
+        }
+    }
 
 
     const moreMenu = (
@@ -149,7 +158,7 @@ const MessageItem = forwardRef(({
                     )}
 
                     {isAudio ? (
-                        <audio controls src={msg.content} className="rounded" />
+                        <audio controls src={(msg.content as string).startsWith("http") ? msg.content : msg.fileMeta[0].url} className="rounded" />
                     ) : isImage ? (
                         <div className={`grid gap-2 ${msg.fileMeta?.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
                             {msg.fileMeta?.map((file: any, idx: number) => (
@@ -219,6 +228,12 @@ const MessageItem = forwardRef(({
                                         <span className="text-lg">{emoji}</span>
                                     </div>
                                 ))}
+                                <div
+                                    onClick={() => removeAllEmojiForMe()}
+                                    className="cursor-pointer hover:bg-gray-100 p-1 rounded-full transition"
+                                >
+                                    <span className="text-lg">X</span>
+                                </div>
                             </div>
                         )}
                         trigger={['click']}

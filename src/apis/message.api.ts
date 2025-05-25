@@ -24,3 +24,12 @@ export const sendEmojiApi = (messageId: string, typeEmoji: string) =>
 
 export const revokeEmojiApi = (messageId: string, typeEmoji: string) =>
     http.delete(`/message/${messageId}/emoji`, { data: { typeEmoji } });
+
+
+export const toggleEmojiApi = (messageId: string, typeEmoji: string) =>
+    http.put(`/message/${messageId}/emoji/toggle`, { typeEmoji });
+
+
+
+export const revokeEmojiApiAll = (messageId: string) =>
+    http.delete(`/message/${messageId}/emoji-all`);
