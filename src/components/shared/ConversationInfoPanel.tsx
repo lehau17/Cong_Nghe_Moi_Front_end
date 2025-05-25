@@ -2,10 +2,11 @@ import { acceptInvite, addMembersToGroup, getFriendsNotInGroup, getInvitesByGrou
 import { Button } from "@/components/ui/button";
 import { useChatContext } from "@/context/ChatContext";
 import { useUpdateGroupAvatar, useUpdateGroupName } from "@/hooks/useUpdateGroupAvatar";
+import http from "@/lib/http";
 import { useDisbandGroup } from "@/queries/conversation.query";
 import { LeftOutlined, MoreOutlined, XOutlined } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Checkbox, Dropdown, Input, Menu, Switch } from "antd";
+import { Avatar, Checkbox, Dropdown, Input, Menu, Switch } from "antd";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { useDebounce } from "react-use";
@@ -43,8 +44,16 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
     const [searchText, setSearchText] = useState("")
     const [debouncedSearch, setDebouncedSearch] = useState("")
     const [selectedMembers, setSelectedMembers] = useState<string[]>([])
+    const { data: infoData } = useQuery({
+        queryKey: ["conversation-info", conversation._id],
+        queryFn: async () => {
+            const res = await http.get(`/conversation/${conversation._id}/infomation`);
+            return res.data
+        },
+        enabled: !!conversation?._id,
+    });
 
-
+    console.log("check info data", infoData)
 
     const toggleRoleMutation = useMutation({
         mutationFn: async ({ groupId, userId, newRole }: { groupId: string, userId: string, newRole: "member" | "admin" }) => {
@@ -389,14 +398,17 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
                     <>
                         {/* Profile */}
                         <div className="flex flex-col items-center mt-5 px-4 border-b-4 pb-5">
-                            <div className="relative w-20 h-20 border-2 rounded-full bg-gray-200 ">
-                                {conversationData.avatar ? (
-                                    <img src={conversationData.avatar} alt="Avatar" className="w-full h-full object-cover rounded-full" />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-gray-600 font-semibold text-2xl">
-                                        {conversationData.name?.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase()}
-                                    </div>
-                                )}
+                            <div className="relative border-2 rounded-full">
+                                <Avatar
+
+                                    src={conversationData.avatar || undefined}
+                                    alt={newName}
+
+                                    size={80}
+                                    className="mr-2 text-black font-bold cursor-pointer "
+                                >
+                                    {newName.split(" ").slice(0, 2).map((word: any) => word[0]).join("").toUpperCase() || "Nguoi La"}
+                                </Avatar>
 
                                 {(currentUserRole === "owner" || currentUserRole === "admin") && (
                                     <>
@@ -486,26 +498,25 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
                             )}
 
                             <div className="grid grid-cols-3 gap-4 mt-5 text-center text-sm">
-                                <div className="flex flex-col items-center text-gray-600">
+                                <div className="flex flex-col items-center text-gray-600 cursor-pointer">
                                     <span className="text-xl">👥</span>
-                                    <span>Tạo nhóm trò chuyện</span>
+                                    <span className="text-[12px]">Tạo nhóm trò chuyện</span>
                                 </div>
                             </div>
                         </div>
 
                         {/* Info List */}
                         <div className="mt-6 px-4 space-y-4 text-sm text-gray-700 border-b-4 pb-5">
-                            <div className="flex items-center gap-2">
-                                <span className="text-lg">🕒</span>
-                                <span>Danh sách nhắc hẹn</span>
-                            </div>
+
                             <div className="flex items-center gap-2">
                                 <span className="text-lg">👥</span>
-                                <span>7 nhóm chung</span>
+                                <span>
+                                    {infoData?.data?.sharedGroupCounts?.length ?? 0} nhóm chung
+                                </span>
                             </div>
 
 
-                            <div className="flex items-center justify-between w-full px-4 mt-4">
+                            {conversationData.type !== "single" && <div className="flex items-center justify-between w-full px-4 mt-4">
                                 <div className="flex flex-col text-sm text-gray-700">
                                     <span>🔒 Duyệt thành viên</span>
                                     <span className="text-xs text-gray-500">Chỉ owner mới có thể chỉnh</span>
@@ -518,7 +529,7 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
                                         onChange={(checked) => updateApprovalSettingMutation.mutate(checked)}
                                     />
                                 )}
-                            </div>
+                            </div>}
                         </div>
 
 
@@ -527,14 +538,28 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
                         <div className="mt-6 px-4 border-b-4 pb-5">
                             <div className="font-semibold text-sm mb-2 text-gray-800">Ảnh/Video</div>
                             <div className="grid grid-cols-3 gap-2">
-                                {images.map((img, idx) => (
-                                    <img
-                                        key={idx}
-                                        src={img}
-                                        alt="media"
-                                        className="w-full h-20 object-cover rounded-md border"
-                                    />
-                                ))}
+                                {infoData?.data?.mediaMessages
+                                    ?.flatMap((msg: any) => msg.fileMeta.map((file: any) => ({ type: msg.type, file })))
+                                    ?.slice(0, 6)
+                                    ?.map((item: any, idx: number) => {
+                                        if (!item.file?.url) return null;
+
+                                        return item.type === "image" ? (
+                                            <img
+                                                key={idx}
+                                                src={item.file.url}
+                                                alt={item.file.name}
+                                                className="w-full h-20 object-cover rounded-md border"
+                                            />
+                                        ) : (
+                                            <video
+                                                key={idx}
+                                                src={item.file.url}
+                                                className="w-full h-20 object-cover rounded-md border"
+                                                controls
+                                            />
+                                        );
+                                    })}
                             </div>
                             <Button
                                 variant="ghost"
@@ -544,20 +569,50 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
                             </Button>
                         </div>
 
+
+
                         {/* Files Section */}
                         <div className="mt-6 pb-6">
                             <div className="font-semibold text-sm mb-2 text-gray-800">File</div>
                             <div className="flex flex-col gap-3 rounded-md cursor-pointer">
-                                <div className="flex items-center hover:bg-gray-200 transition py-3 px-2">
-                                    <img
-                                        src="https://cdn-icons-png.flaticon.com/512/281/281760.png"
-                                        alt="doc"
-                                        className="w-8 h-8"
-                                    />
-                                    <span className="text-sm text-gray-700 truncate">CNM_Tuan2.docx</span>
-                                </div>
+                                {infoData?.data?.fileMessages?.length ? (
+                                    infoData.data.fileMessages
+                                        .flatMap((msg: any) =>
+                                            msg.fileMeta.map((file: any) => ({ file }))
+                                        )
+                                        .slice(0, 6)
+                                        .map((item: any, idx: number) => (
+                                            <div
+                                                key={idx}
+                                                className="flex items-center hover:bg-gray-200 transition py-3 px-2"
+                                                onClick={() => window.open(item.file.url, "_blank")}
+                                            >
+                                                <img
+                                                    src="https://cdn-icons-png.flaticon.com/512/281/281760.png"
+                                                    alt="file"
+                                                    className="w-8 h-8 mr-2"
+                                                />
+                                                <span className="text-sm text-gray-700 truncate">{item.file.name}</span>
+                                            </div>
+                                        ))
+                                ) : (
+                                    <span className="text-sm text-gray-500">Chưa có file nào</span>
+                                )}
                             </div>
+
+                            {infoData?.data?.fileMessages?.some((msg: any) => msg.fileMeta.length) &&
+                                infoData.data.fileMessages
+                                    .flatMap((msg: any) => msg.fileMeta).length > 6 && (
+                                    <Button
+                                        variant="ghost"
+                                        className="w-full mt-3 text-blue-600 font-semibold hover:bg-gray-100"
+                                    >
+                                        Xem tất cả
+                                    </Button>
+                                )}
                         </div>
+
+
                     </>
                 )}
         </div>

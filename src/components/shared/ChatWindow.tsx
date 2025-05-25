@@ -158,7 +158,7 @@ const MessageItem = forwardRef(({
                     )}
 
                     {isAudio ? (
-                        <audio controls src={(msg.content as string).startsWith("http") ? msg.content : msg.fileMeta[0].url} className="rounded" />
+                        <audio controls src={(msg.content as string).startsWith("http") ? msg.content : msg.fileMeta[0]?.url} className="rounded" />
                     ) : isImage ? (
                         <div className={`grid gap-2 ${msg.fileMeta?.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
                             {msg.fileMeta?.map((file: any, idx: number) => (
