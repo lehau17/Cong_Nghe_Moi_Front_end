@@ -135,7 +135,6 @@ const MessageItem = forwardRef(({
 
                     }}
                     className={`px-4 py-2 rounded-sm break-words relative cursor-pointer ${isMine ? "bg-[#dbebff] text-black " : "bg-gray-200 text-black "} ${msg.isRevoke && "text-gray"}`}
-                    style={{ minWidth: "200px" }}
                 >
                     {msg.replyTo && (
                         <div
