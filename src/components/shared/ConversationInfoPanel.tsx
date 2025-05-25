@@ -17,11 +17,7 @@ interface Props {
     currentUserRole: string
 }
 
-const images = [
-    "https://i.imgur.com/5MZocC4.png",
-    "https://i.imgur.com/5MZocC4.png",
-    "https://i.imgur.com/5MZocC4.png",
-];
+
 
 const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "member" }: Props) => {
     const { conversationList, setConversationId, setMessages, setActiveUser, setConversationList } = useChatContext();
