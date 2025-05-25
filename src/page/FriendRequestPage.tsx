@@ -53,7 +53,9 @@ const FriendRequestPage = () => {
                             className="flex items-center justify-between border-b pb-3"
                         >
                             <div className="flex items-center gap-3">
-                                <Avatar size={48} src={req.from.avatar} />
+                                <Avatar size={48} src={req.from?.avatar}>
+                                    {req.from.fullName?.charAt(0).toUpperCase()}
+                                </Avatar>
                                 <div>
                                     <div className="font-semibold">{req.from.fullName}</div>
                                     <div className="text-xs text-gray-500">
