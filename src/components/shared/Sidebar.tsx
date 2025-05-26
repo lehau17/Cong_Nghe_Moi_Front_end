@@ -69,7 +69,7 @@ const Sidebar = () => {
                 <div className="flex flex-col space-y-6">
                     <FaUserFriends
                         size={24}
-                        onClick={() => navigate("/chat")}
+                        onClick={() => navigate("/friend-list")}
                         className="cursor-pointer"
                     />
 
