@@ -46,7 +46,6 @@ const ChangePasswordModal = ({ onClose }: { onClose: () => void }) => {
         },
         onError: (err: any) => {
             toast.success(err?.response?.data?.message || "❌ Lỗi đổi mật khẩu", { autoClose: 2000 });
-
         },
     });
 

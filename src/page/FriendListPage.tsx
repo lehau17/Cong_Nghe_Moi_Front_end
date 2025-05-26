@@ -7,18 +7,36 @@ import { Dropdown, Input, Menu, message, Modal, Select } from "antd";
 import { useContext, useEffect, useState } from "react";
 
 const FriendListPage = () => {
+    // dùng để lưu nội dung search tìm kiếm
+    // có 2 biến là search và setSearch. biến `search` dùng để lưu thông tin tìm kiếm
+    // hàm setSeach dùng để cập nhật thay đổi
+    // Nếu người dùng nhập nội dung timf kiếm. gọi hàm setSearch để cập nhật search
     const [search, setSearch] = useState("");
+    // dùng để xắp xếp theo tên người dùng
+    // mặt định là từ A-Z
+    // có 2 loại là A-Z và Z-A
+    // nếu muốn thay đổi cách sắp xếp thì gọi hàm setSortOrder
     const [sortOrder, setSortOrder] = useState("A-Z");
+    // tanstack query kết hợp axios để call api huỷ bạn bè
     const { mutate } = useDeleteFriendShip();
+    // socket IO
     const socket = useContext(SocketContext);
+    // dùng để mở model profile.
+    // giá trị mạt định là false sẽ không hiện
+    // muốn hiển thị model thì sẽ gọi hàm setOpenProfile chuyển nó thành true.
+    // khi true thì model sẽ mở
+    // tắt model thì gọi hàm setOpenProfile gắn nó là false
     const [openProfile, setOpenProfile] = useState<boolean>(false)
+
     const [userSelect, setUserSelect] = useState<string>('')
 
+    // lấy danh sách bạn bè
+    // dùng tanstack query với axios
     const { data, refetch } = useAcceptedFriendRequests();
-
     const friends = data?.data?.data || [];
 
     // Filter + sort
+    // săp xêps danh sách bạn bè từ A-Z
     const filteredFriends = friends
         .filter((f) => f?.fullName?.toLowerCase().includes(search.toLowerCase()))
         .sort((a, b) =>
@@ -28,6 +46,7 @@ const FriendListPage = () => {
         );
 
     // Group by first letter
+    // gom nhóm các bạn bè lại theo chữ cái đầu trong tên
     const grouped: Record<string, any[]> = {};
     for (const friend of filteredFriends) {
         const letter = friend?.fullName.charAt(0).toUpperCase();
@@ -42,6 +61,9 @@ const FriendListPage = () => {
     // Handler actions
     const { confirm } = Modal;
 
+
+    // các lựa chọn trong menu con
+    // chọn caí nào thì xử lý cái đó
     const handleMenuClick = (action: string, fs_id: string, friend_id: string) => {
         switch (action) {
             case "view_info":
@@ -59,13 +81,16 @@ const FriendListPage = () => {
         }
     };
 
-
+    // khi nhấn huyr kết bạn gọi hàm này
+    // sẽ hiển thị lên 1 cái giao diện bạn có chắc muốn xoá bạn bè không
+    // chọn oke thì sẽ call api huỷ kết bạn
     const showConfirmDelete = (friendId: string) => {
         confirm({
             title: `Xác nhận huỷ kết bạn`,
             content: "Bạn có chắc chắn muốn huỷ kết bạn? Hành động này không thể hoàn tác.",
             okText: "Xác nhận",
             cancelText: "Huỷ",
+            // nếu châp nhận kết bạn sẽ gọi hàm onOK
             onOk() {
                 return new Promise((resolve, reject) => {
                     mutate(friendId, {
@@ -80,27 +105,35 @@ const FriendListPage = () => {
                     });
                 });
             },
+            // Khi từ chối gọi hàm này
             onCancel() {
                 console.log("Huỷ thao tác");
             },
         });
     };
 
-
+    // bắt sự kiện websocket
     useEffect(() => {
+        // khi socket nhận được sự kiện `delete-friendship`
+        // call lại api bằng hàm refetch
+        // hàm này có tác dụng call laị api
         socket.on("delete-friendship", (_: string) => {
             refetch();
         });
 
+
+        // hàm này là hàm clean.
+        // có nghĩa là nếu thoát khỏi giao diện này cần huỷ hứng sự kiện
         return () => {
             socket.off("delete-friendship");
         };
     }, [socket, refetch]);
 
 
-
+    // Hàm dùng để hiển thị Menu khi chọn vào ... bên danh sách bạn bè
     const renderMenu = (fs_id: string, friend_id: string) => (
         <Menu
+            // khi nhấn vào 1 cái item trong menu thì gọi hàm này
             onClick={(e) => handleMenuClick(e.key, fs_id, friend_id)}
             items={[
                 {
@@ -132,7 +165,7 @@ const FriendListPage = () => {
         />
     );
 
-
+    // Giao diện
     return (
         <div className="flex flex-col h-screen bg-gray-100">
             <Header title="Danh sách bạn bè" />

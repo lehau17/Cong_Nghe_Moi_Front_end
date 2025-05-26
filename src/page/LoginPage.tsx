@@ -37,6 +37,7 @@ export default function LoginPage() {
     const [isQR, setIsQR] = useState(false);
     const navigate = useNavigate()
     const socket = useContext(SocketContext);
+
     const {
         register,
         handleSubmit,
