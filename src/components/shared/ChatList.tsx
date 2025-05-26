@@ -327,7 +327,7 @@ const ChatList = () => {
                 onClose={() => setShowFriendModal(false)}
                 onSelectUser={(user) => handleSelectUser(user)}
             />
-            <CreateGroupModal open={showCreateGroup} onClose={() => setShowCreateGroup(false)} />
+            <CreateGroupModal open={showCreateGroup} onClose={() => setShowCreateGroup(false)} userIds={[]} />
 
         </div>
     );

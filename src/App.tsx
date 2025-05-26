@@ -60,7 +60,6 @@ function App() {
 
         socket.on("message-recalled", (updatedMessage) => {
 
-            console.log("=>>> Recall Message : >>>", updatedMessage)
             setMessages((prevMessages) =>
                 prevMessages.map((msg) =>
                     msg._id === updatedMessage._id ? { ...msg, ...updatedMessage } : msg

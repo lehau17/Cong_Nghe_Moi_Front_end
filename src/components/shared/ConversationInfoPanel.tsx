@@ -10,6 +10,7 @@ import { Avatar, Checkbox, Dropdown, Input, Menu, Modal, Switch } from "antd";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { useDebounce } from "react-use";
+import CreateGroupModal from "./CreateGroupModal";
 
 interface Props {
     onClose: () => void;
@@ -24,6 +25,7 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
     const currentUser = JSON.parse(localStorage.getItem("profile") || "{}");
     const currentUserId = currentUser._id;
     const isGroup = conversation?.type === "group";
+    const [showCreateGroup, setShowCreateGroup] = useState(false)
     const [conversationData, setConversationData] = useState(conversation);
     const [isEditingName, setIsEditingName] = useState(false);
     const [newName, setNewName] = useState(conversationData.name || conversationData.participants.find((e: any) => e._id !== currentUserId)?.fullName);
@@ -51,6 +53,7 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
 
     const [openImageModal, setOpenImageModal] = useState(false);
     const [activeImage, setActiveImage] = useState<string | null>(null);
+    const [openFileModal, setOpenFileModal] = useState(false);
 
 
 
@@ -196,6 +199,15 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
         onError: () => toast.error("❌ Không thể cập nhật cài đặt duyệt thành viên"),
     });
 
+
+
+    const userIds = infoData?.data?.participants.map((e: any) => {
+        if (e.user._id !== currentUserId) {
+            return e.user._id
+        }
+    })
+
+    console.log(userIds)
 
 
     const currentConv = conversationList.find((c: any) => c._id === conversationData._id);
@@ -500,7 +512,7 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
                                 !isGroup && <div className="grid grid-cols-3 gap-4 mt-5 text-center text-sm">
                                     <div className="flex flex-col items-center text-gray-600 cursor-pointer">
                                         <span className="text-xl">👥</span>
-                                        <span className="text-[12px]">Tạo nhóm trò chuyện</span>
+                                        <span className="text-[12px]" onClick={() => setShowCreateGroup(true)}>Tạo nhóm trò chuyện</span>
                                     </div>
                                 </div>
                             }
@@ -620,9 +632,11 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
                                     <Button
                                         variant="ghost"
                                         className="w-full mt-3 text-blue-600 font-semibold hover:bg-gray-100"
+                                        onClick={() => setOpenFileModal(true)}
                                     >
                                         Xem tất cả
                                     </Button>
+
                                 )}
                         </div>
 
@@ -667,6 +681,34 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
                     </div>
                 </div>
             </Modal>
+            <Modal
+                open={openFileModal}
+                onCancel={() => setOpenFileModal(false)}
+                footer={null}
+                title="Danh sách file đã chia sẻ"
+                width={600}
+            >
+                <div className="flex flex-col gap-3 max-h-[60vh] overflow-auto">
+                    {infoData?.data?.fileMessages
+                        ?.flatMap((msg: any) => msg.fileMeta)
+                        .map((file: any, idx: number) => (
+                            <div
+                                key={idx}
+                                className="flex items-center hover:bg-gray-100 transition py-2 px-3 cursor-pointer"
+                                onClick={() => window.open(file.url, "_blank")}
+                            >
+                                <img
+                                    src="https://cdn-icons-png.flaticon.com/512/281/281760.png"
+                                    alt="file"
+                                    className="w-6 h-6 mr-2"
+                                />
+                                <span className="text-sm text-gray-800">{file.name}</span>
+                            </div>
+                        ))}
+                </div>
+            </Modal>
+            <CreateGroupModal open={showCreateGroup} onClose={() => setShowCreateGroup(false)} userIds={userIds} />
+
 
         </div>
     );

@@ -10,14 +10,17 @@ import { useRef, useState } from "react";
 import { IoClose } from "react-icons/io5";
 import { toast } from "react-toastify";
 
-export default function CreateGroupModal({ open, onClose }: { open: boolean, onClose: () => void }) {
-    const [selected, setSelected] = useState<string[]>([]);
+export default function CreateGroupModal({ open, onClose, userIds }: { open: boolean, onClose: () => void, userIds: string[] }) {
+    const [selected, setSelected] = useState<string[]>(userIds);
     const [search, setSearch] = useState("");
     const [sortOrder, _] = useState("A-Z");
     const [groupName, setGroupName] = useState("");
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [groupAvatar, setGroupAvatar] = useState<string | null>(null);
     const { data, isLoading } = useAcceptedFriendRequests(open);
+
+
+    console.log("check select", selected)
 
     const friends = data?.data?.data || [];
 

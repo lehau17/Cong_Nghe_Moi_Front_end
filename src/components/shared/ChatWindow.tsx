@@ -10,7 +10,9 @@ import { agoraService } from "@/services/agoraService";
 import { UserProfile } from "@/types/user.type";
 import {
     AudioOutlined,
-    MoreOutlined, PaperClipOutlined, PictureOutlined, SendOutlined, ShareAltOutlined, SmileOutlined
+    DeleteOutlined,
+    MoreOutlined, PaperClipOutlined, PictureOutlined, SendOutlined, ShareAltOutlined, SmileOutlined,
+    UndoOutlined
 } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Avatar, Button, Dropdown, Menu, Tooltip } from "antd";
@@ -88,14 +90,45 @@ const MessageItem = forwardRef(({
         }
     }
 
+    const moreMenuMine = (
+        <Menu
+            style={{ minWidth: 180 }}
+            items={[
+                {
+                    key: "recall",
+                    icon: <UndoOutlined className="text-blue-500" />,
+                    label: <span className="text-sm text-blue-700 font-medium">Thu hồi tin nhắn</span>,
+                    onClick: () => recallMutation.mutate()
+                },
+                {
+                    type: "divider",
+                },
+                {
+                    key: "removeOne",
+                    icon: <DeleteOutlined className="text-red-500" />,
+                    label: <span className="text-sm text-red-600 font-medium">Xoá tin nhắn</span>,
+                    onClick: () => recallMutation.mutate()
+                }
+            ]}
+        />
+    );
+
 
     const moreMenu = (
-        <Menu>
-            <Menu.Item key="recall" onClick={() => recallMutation.mutate()}>
-                🗑️ Thu hồi tin nhắn
-            </Menu.Item>
-        </Menu>
+        <Menu
+            style={{ minWidth: 180 }}
+            items={[
+
+                {
+                    key: "removeOne",
+                    icon: <DeleteOutlined className="text-red-500" />,
+                    label: <span className="text-sm text-red-600 font-medium">Xoá tin nhắn</span>,
+                    onClick: () => recallMutation.mutate()
+                }
+            ]}
+        />
     );
+
     return (
         <div ref={ref} className={`group flex flex-col relative mb-1 my-2  ${isMine ? "items-end pr-3" : "items-start pl-3"}`}>
             <div className={`flex items-center  ${isMine ? "flex-row-reverse" : "flex-row"}`}>
@@ -249,13 +282,11 @@ const MessageItem = forwardRef(({
                     </Dropdown>
 
                     {/* ⬇️ More Actions */}
-                    {isMine && (
-                        <Dropdown overlay={moreMenu} trigger={['click']}>
-                            <div className="w-7 h-7 rounded-full bg-white shadow flex items-center justify-center hover:bg-gray-200 cursor-pointer">
-                                <MoreOutlined className="text-sm" />
-                            </div>
-                        </Dropdown>
-                    )}
+                    <Dropdown overlay={isMine && !msg.isRevoke ? moreMenuMine : moreMenu} trigger={['click']}>
+                        <div className="w-7 h-7 rounded-full bg-white shadow flex items-center justify-center hover:bg-gray-200 cursor-pointer">
+                            <MoreOutlined className="text-sm" />
+                        </div>
+                    </Dropdown>
                 </div>
 
             </div>
@@ -651,8 +682,7 @@ const ChatWindow = () => {
                         </div>
                         <div className="text-sm text-gray-500 text-start">
                             {activeConversation?.type === "group"
-                                ? `${activeConversation?.participants?.length || 0} thành viên`
-                                : "Đang hoạt động"}
+                                && `${activeConversation?.participants?.length || 0} thành viên`}
                         </div>
                     </div>
                 </div>

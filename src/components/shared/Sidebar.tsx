@@ -6,6 +6,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { clearLS } from "@/lib/auth";
+import { InboxIcon } from "lucide-react";
 import { useState } from "react";
 import { FaUserFriends } from "react-icons/fa";
 import { IoSettingsSharp } from "react-icons/io5";
@@ -22,7 +23,6 @@ const Sidebar = () => {
     const user = userProfile ? JSON.parse(userProfile) : null;
     const userName = user?.fullName || "Người dùng";
     const userAvatar = user?.avatar;
-    console.log("check user", user)
     return (
         <>
             <div className="w-16 bg-blue-600 h-screen flex flex-col items-center py-4 space-y-6 text-white">
@@ -67,6 +67,11 @@ const Sidebar = () => {
 
                 {/* Menu icons */}
                 <div className="flex flex-col space-y-6">
+                    <InboxIcon
+                        size={24}
+                        onClick={() => navigate("/")}
+                        className="cursor-pointer"
+                    />
                     <FaUserFriends
                         size={24}
                         onClick={() => navigate("/friend-list")}
