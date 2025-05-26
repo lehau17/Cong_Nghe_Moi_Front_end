@@ -6,7 +6,7 @@ import http from "@/lib/http";
 import { useDisbandGroup } from "@/queries/conversation.query";
 import { LeftOutlined, LoadingOutlined, MoreOutlined, XOutlined } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Avatar, Checkbox, Dropdown, Input, Menu, Switch } from "antd";
+import { Avatar, Checkbox, Dropdown, Input, Menu, Modal, Switch } from "antd";
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { useDebounce } from "react-use";
@@ -49,7 +49,10 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
         enabled: !!conversation?._id,
     });
 
-    console.log("check info data", infoData)
+    const [openImageModal, setOpenImageModal] = useState(false);
+    const [activeImage, setActiveImage] = useState<string | null>(null);
+
+
 
     const toggleRoleMutation = useMutation({
         mutationFn: async ({ groupId, userId, newRole }: { groupId: string, userId: string, newRole: "member" | "admin" }) => {
@@ -521,13 +524,12 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
                                 </div>
 
 
-                                {currentUserRole === "owner" && (
-                                    <Switch
-                                        checked={requireApproval}
-                                        loading={updateApprovalSettingMutation.isPending}
-                                        onChange={(checked) => updateApprovalSettingMutation.mutate(checked)}
-                                    />
-                                )}
+                                <Switch
+                                    disabled={currentUserRole !== "owner"}
+                                    checked={requireApproval}
+                                    loading={updateApprovalSettingMutation.isPending}
+                                    onChange={(checked) => updateApprovalSettingMutation.mutate(checked)}
+                                />
                             </div>}
                         </div>
 
@@ -563,6 +565,19 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
                             <Button
                                 variant="ghost"
                                 className="w-full mt-3 text-blue-600 font-semibold hover:bg-gray-100"
+                                onClick={() => {
+                                    const allImages = infoData?.data?.mediaMessages
+                                        ?.flatMap((msg: any) =>
+                                            msg.fileMeta
+                                                .filter(() => msg.type === "image")
+                                                .map((file: any) => file.url)
+                                        );
+
+                                    if (allImages?.length) {
+                                        setActiveImage(allImages[0]);
+                                        setOpenImageModal(true);
+                                    }
+                                }}
                             >
                                 Xem tất cả
                             </Button>
@@ -614,6 +629,45 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
 
                     </>
                 )}
+            <Modal
+                open={openImageModal}
+                onCancel={() => setOpenImageModal(false)}
+                footer={null}
+                width={800}
+                bodyStyle={{ height: 550, padding: 0 }}
+            >
+                <div className="flex flex-col h-full">
+                    {/* Top preview */}
+                    <div className="flex-1 flex items-center justify-center bg-black">
+                        {activeImage ? (
+                            <img src={activeImage} alt="active" className="max-h-full max-w-full" />
+                        ) : (
+                            <span className="text-white">No image selected</span>
+                        )}
+                    </div>
+
+                    {/* Bottom thumbnails */}
+                    <div className="flex overflow-x-auto border-t p-3 gap-2 bg-gray-100">
+                        {infoData?.data?.mediaMessages
+                            ?.flatMap((msg: any) =>
+                                msg.fileMeta
+                                    .filter(() => msg.type === "image")
+                                    .map((file: any) => file.url)
+                            )
+                            .map((url: string, idx: number) => (
+                                <img
+                                    key={idx}
+                                    src={url}
+                                    alt={`thumb-${idx}`}
+                                    className={`h-20 w-auto object-cover rounded cursor-pointer border ${url === activeImage ? "border-blue-500" : "border-transparent"
+                                        }`}
+                                    onClick={() => setActiveImage(url)}
+                                />
+                            ))}
+                    </div>
+                </div>
+            </Modal>
+
         </div>
     );
 };

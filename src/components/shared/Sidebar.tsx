@@ -7,9 +7,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { clearLS } from "@/lib/auth";
 import { useState } from "react";
-import { FaBriefcase, FaCloud, FaUserFriends } from "react-icons/fa";
-import { HiOutlineClipboardList } from "react-icons/hi";
-import { IoChatbubbleEllipsesSharp, IoSettingsSharp } from "react-icons/io5";
+import { FaUserFriends } from "react-icons/fa";
+import { IoSettingsSharp } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import ProfileModal from "./ProfileModal";
 import SettingsModal from "./SettingsModal";
@@ -68,15 +67,12 @@ const Sidebar = () => {
 
                 {/* Menu icons */}
                 <div className="flex flex-col space-y-6">
-                    <IoChatbubbleEllipsesSharp
+                    <FaUserFriends
                         size={24}
                         onClick={() => navigate("/chat")}
                         className="cursor-pointer"
                     />
-                    <HiOutlineClipboardList size={24} onClick={() => navigate("/friend-list")} />
-                    <FaCloud size={24} />
-                    <FaUserFriends size={24} />
-                    <FaBriefcase size={24} />
+
                 </div>
 
                 {/* Nút cài đặt cuối sidebar */}

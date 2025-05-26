@@ -6,7 +6,7 @@ import { CameraFilled } from '@ant-design/icons';
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "antd";
 import { SearchIcon } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { IoClose } from "react-icons/io5";
 import { toast } from "react-toastify";
 
@@ -15,7 +15,8 @@ export default function CreateGroupModal({ open, onClose }: { open: boolean, onC
     const [search, setSearch] = useState("");
     const [sortOrder, _] = useState("A-Z");
     const [groupName, setGroupName] = useState("");
-
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [groupAvatar, setGroupAvatar] = useState<string | null>(null);
     const { data, isLoading } = useAcceptedFriendRequests(open);
 
     const friends = data?.data?.data || [];
@@ -60,6 +61,7 @@ export default function CreateGroupModal({ open, onClose }: { open: boolean, onC
         createGroupMutation.mutate({
             name: groupName,
             members: selected,
+            avatar: groupAvatar
         });
     };
 
@@ -69,9 +71,50 @@ export default function CreateGroupModal({ open, onClose }: { open: boolean, onC
                 <DialogTitle className="text-lg font-semibold pb-3 border-b-2">Tạo nhóm</DialogTitle>
 
                 <div className="flex items-center justify-center gap-4">
-                    <div className="border-b border-black rounded-full w-14 h-12 shadow-md flex items-center justify-center">
-                        <CameraFilled size={30} />
+                    <div
+                        className="border-b border-black rounded-full w-14 h-12 shadow-md flex items-center justify-center cursor-pointer"
+                        onClick={() => fileInputRef.current?.click()}
+                    >
+                        {groupAvatar ? (
+                            <img
+                                src={groupAvatar}
+                                alt="Group Avatar"
+                                className="w-full h-full object-cover rounded-full"
+                            />
+                        ) : (
+                            <CameraFilled size={20} />
+                        )}
+                        <input
+                            type="file"
+                            accept="image/*"
+                            hidden
+                            ref={fileInputRef}
+                            onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+
+                                const formData = new FormData();
+                                formData.append("file", file);
+
+                                try {
+                                    const res = await fetch("https://be.haudev.io.vn/api/upload", {
+                                        method: "POST",
+                                        body: formData,
+                                    });
+
+                                    const data = await res.json();
+                                    if (res.ok && data.data.url) {
+                                        setGroupAvatar(data.data.url);
+                                    } else {
+                                        throw new Error(data.message || "Lỗi upload");
+                                    }
+                                } catch (err) {
+                                    toast.error("❌ Upload thất bại");
+                                }
+                            }}
+                        />
                     </div>
+
                     <Input
                         value={groupName}
                         onChange={(e) => setGroupName(e.target.value)}

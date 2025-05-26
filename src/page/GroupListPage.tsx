@@ -114,6 +114,7 @@ const GroupListPage = () => {
             },
         });
     };
+
     console.log(showConfirmDelete)
 
     // bắt sự kiện websocket

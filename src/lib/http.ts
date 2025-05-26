@@ -10,7 +10,6 @@ import {
     setRefreshTokenToLS
 } from '@/lib/auth'
 import axios, { type AxiosInstance } from 'axios'
-import { toast } from 'react-toastify'
 import { isAxiosExpiredTokenError, isAxiosUnauthorizedError } from './utils'
 
 
@@ -66,9 +65,9 @@ class Http {
                     ![HttpStatusCode.UnprocessableEntity, HttpStatusCode.Unauthorized, HttpStatusCode.BadRequest].includes(error.response?.status as number)
                 ) {
                     console.log("Toast loi o HTTP")
-                    const data: any | undefined = error.response?.data
-                    const message = data?.message || error.message
-                    toast.error(message)
+                    // const data: any | undefined = error.response?.data
+                    // const _ = data?.message || error.message
+                    // toast.error(message)
                 }
                 if (isAxiosUnauthorizedError(error)) {
                     const config = error.response?.config || {} as any
