@@ -20,14 +20,13 @@ function App() {
     const socket = useContext(SocketContext);
     const { setShowCallUI, setCallInfo } = useCallContext();
     const conversationListRef = useRef<Conversation[]>([]);
+    const converIdRef = useRef<string | null>("")
 
 
-
-    const { appendMessage, setMessages, conversationId, setConversationId, updateConversationList, conversationList, setConversationList } = useChatContext()
-    const { refetch: refetchUserProfile } = useQuery({
+    const { appendMessage, setMessages, conversationId, setConversationId, updateConversationList, conversationList, setConversationList, setActiveUser } = useChatContext()
+    const { refetch: refetchUserProfile, isLoading, isPending } = useQuery({
         queryKey: ["userProfile"],
         queryFn: getUserProfile,
-        enabled: false,
     });
     const { refetch } = useQuery({
         queryKey: ["myConversations"],
@@ -37,6 +36,7 @@ function App() {
 
 
     conversationListRef.current = conversationList;
+    converIdRef.current = conversationId
 
 
 
@@ -97,6 +97,7 @@ function App() {
             socket.off("new-message", handleNewMessage);
         };
     }, [conversationId]);
+
     useEffect(() => {
         const accessToken = getAccessTokenFromLS();
         if (accessToken) {
@@ -124,14 +125,28 @@ function App() {
 
 
                         socket.on("group:deleted", ({ groupId }) => {
+                            console.log("check data :>>", groupId, conversationId)
                             setConversationList((prev) => prev.filter(conv => conv._id !== groupId));
 
-                            if (conversationId === groupId) {
+                            if (converIdRef.current === groupId) {
                                 setConversationId(null);
+                                setActiveUser(null)
+                                setMessages([])
+
                                 toast.info("🚫 Nhóm đã bị giải tán");
                             }
                         });
 
+
+                        socket.on("hide-conv", (groupId) => {
+                            console.log("check data :>>", groupId)
+
+                            if (converIdRef.current === groupId) {
+                                setConversationId(null);
+                                setActiveUser(null)
+                                setMessages([])
+                            }
+                        });
 
                         socket.on("group:member-added-group", async ({ groupId, addedUserIds, addedBy: _ }) => {
                             const currentUserId = result.data.data.data._id;
@@ -207,7 +222,6 @@ function App() {
 
 
                         socket.on("group:member-removed", ({ groupId, removedUserId, removedBy: _ }) => {
-                            console.log("remove member", groupId, removedUserId)
                             const currentUserId = result.data.data.data._id;
 
                             if (removedUserId === currentUserId) {
@@ -215,8 +229,9 @@ function App() {
                                 toast.info("Bạn đã bị xoá khỏi nhóm");
 
                                 // Nếu đang mở cuộc trò chuyện đó thì clear
-                                if (conversationId === groupId) {
+                                if (converIdRef.current === groupId) {
                                     setConversationId(null)
+                                    setMessages([])
                                     // Có thể gọi setConversationId(null) hoặc chuyển sang màn hình khác
                                 }
 
@@ -384,7 +399,7 @@ function App() {
             socket.off("friend-request");
             socket.disconnect(); // cleanup khi unmount
         };
-    }, []);
+    }, [isLoading, isPending]);
 
     return (
         <>

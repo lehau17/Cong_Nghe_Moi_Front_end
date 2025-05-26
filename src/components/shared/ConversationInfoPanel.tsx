@@ -1,13 +1,14 @@
 import { acceptInvite, addMembersToGroup, getFriendsNotInGroup, getInvitesByGroup, leaveGroup, rejectInvite, removeMemberFromGroup, updateGroupMemberRole, updateRequireApproval } from "@/apis/conversation-group.api";
 import { Button } from "@/components/ui/button";
 import { useChatContext } from "@/context/ChatContext";
+import { SocketContext } from "@/context/SocketContext";
 import { useUpdateGroupAvatar, useUpdateGroupName } from "@/hooks/useUpdateGroupAvatar";
 import http from "@/lib/http";
 import { useDisbandGroup } from "@/queries/conversation.query";
 import { LeftOutlined, LoadingOutlined, MoreOutlined, XOutlined } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Avatar, Checkbox, Dropdown, Input, Menu, Modal, Switch } from "antd";
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useDebounce } from "react-use";
 import CreateGroupModal from "./CreateGroupModal";
@@ -21,7 +22,7 @@ interface Props {
 
 
 const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "member" }: Props) => {
-    const { conversationList, setConversationId, setMessages, setActiveUser, setConversationList } = useChatContext();
+    const { setConversationId, setMessages, setActiveUser, setConversationList } = useChatContext();
     const currentUser = JSON.parse(localStorage.getItem("profile") || "{}");
     const currentUserId = currentUser._id;
     const isGroup = conversation?.type === "group";
@@ -33,6 +34,7 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
         setConversationData((prev: any) => ({ ...prev, name: updatedName, fullName: updatedName }));
         setIsEditingName(false);
     });
+    const socket = useContext(SocketContext)
     const { handleClick, inputRef, handleChange } = useUpdateGroupAvatar(conversation._id, (newAvatar) => {
         setConversationData((prev: any) => ({ ...prev, avatar: newAvatar }));
     });
@@ -42,7 +44,7 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
     const [searchText, setSearchText] = useState("")
     const [debouncedSearch, setDebouncedSearch] = useState("")
     const [selectedMembers, setSelectedMembers] = useState<string[]>([])
-    const { data: infoData } = useQuery({
+    const { data: infoData, refetch } = useQuery({
         queryKey: ["conversation-info", conversation._id],
         queryFn: async () => {
             const res = await http.get(`/conversation/${conversation._id}/infomation`, { params: { type: conversation?.type } });
@@ -82,6 +84,41 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
             toast.error("❌ Cập nhật quyền thất bại");
         }
     });
+
+    useEffect(() => {
+        const handleMemberAdded = () => {
+            refetch();
+        };
+
+        const handleRoleChanged = ({ groupId, userId, newRole }: any) => {
+            refetch();
+            setConversationList((prevList) =>
+                prevList.map((conv: any) => {
+                    if (conv._id !== groupId) return conv;
+                    return {
+                        ...conv,
+                        participants: conv.participants.map((p: any) =>
+                            p._id === userId ? { ...p, role: newRole } : p
+                        ),
+                    };
+                })
+            );
+        };
+
+        socket.on("group:member-added-group", handleMemberAdded);
+        socket.on("group:memberRoleChanged", handleRoleChanged);
+        socket.on("group:member-removed", () => {
+            refetch();
+
+        })
+
+
+        return () => {
+            socket.off("group:member-added-group", handleMemberAdded);
+            socket.off("group:memberRoleChanged", handleRoleChanged);
+        };
+    }, [socket, setConversationList, refetch]);
+
 
 
 
@@ -210,8 +247,11 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
     console.log(userIds)
 
 
-    const currentConv = conversationList.find((c: any) => c._id === conversationData._id);
-    const participants = currentConv?.participants || [];
+    const participants = infoData?.data?.participants?.map((p: any) => ({
+        ...p.user,
+        role: p.role,
+    })) || [];
+
     // const otherUser = !isGroup
     //     ? currentConv?.participants?.find((p: any) => p._id !== currentUserId)
     //     : null;
@@ -242,16 +282,24 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
                             key={p._id}
                             className="flex items-center justify-between p-4 hover:bg-gray-200 rounded transition"
                         >
-                            {/* Avatar + Name */}
                             <div className="flex items-center gap-3">
-                                <img
-                                    src={p.avatar || "https://via.placeholder.com/40"}
-                                    alt={p.fullName}
-                                    className="w-12 h-12 rounded-full object-cover border"
-                                />
+                                <Avatar
+                                    size={48}
+                                    src={p.avatar}
+                                    style={{ backgroundColor: "#ccc", fontWeight: 500 }}
+                                >
+                                    {!p.avatar &&
+                                        (p.fullName || "??")
+                                            .split(" ")
+                                            .slice(0, 2)
+                                            .map((w: string) => w[0])
+                                            .join("")
+                                            .toUpperCase()}
+                                </Avatar>
                                 <span className="text-sm font-semibold">{p.fullName}</span>
                                 <span className="text-[10px] font-thin">{p.role}</span>
                             </div>
+
 
                             {/* Action dropdown */}
                             {p._id !== currentUserId && <Dropdown
