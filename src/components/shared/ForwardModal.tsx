@@ -1,6 +1,7 @@
+import { getMyConversations } from "@/apis/conversation.api";
+import { fetchAcceptFriendRequests } from "@/apis/friend-request.api";
 import { forwardMessage } from "@/apis/message.api";
-import { useChatContext } from "@/context/ChatContext";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Checkbox, Input, Modal, Tabs, message as antdMessage } from "antd";
 import { useEffect, useMemo, useState } from "react";
 
@@ -13,10 +14,10 @@ type ForwardModalProps = {
 };
 
 const ForwardModal = ({ open, messageToForward, onClose }: ForwardModalProps) => {
-    const { conversationList } = useChatContext();
     const [selectedConversations, setSelectedConversations] = useState<string[]>([]);
     const [searchValue, setSearchValue] = useState("");
     const [customMessage, setCustomMessage] = useState("");
+    const [tabKey, setTabKey] = useState<"recent" | "group" | "friend">("recent");
 
     const currentUserId = useMemo(() => {
         try {
@@ -26,16 +27,48 @@ const ForwardModal = ({ open, messageToForward, onClose }: ForwardModalProps) =>
         }
     }, []);
 
+    // 📌 Query conversations
+    const { data: conversationRes } = useQuery({
+        queryKey: ["my-conversations"],
+        queryFn: getMyConversations,
+        enabled: open,
+    });
+
+    // 📌 Query friends
+    const { data: friendRes } = useQuery({
+        queryKey: ["my-friends"],
+        queryFn: fetchAcceptFriendRequests,
+        enabled: open,
+    });
+
+    const conversationList = conversationRes?.data?.data || [];
+    const friendList = friendRes?.data?.data || [];
+
     const filteredConversations = useMemo(() => {
-        return conversationList.filter((conv) => {
-            const user = conv.participants.find(p => p._id !== currentUserId);
-            return user?.fullName.toLowerCase().includes(searchValue.toLowerCase());
+        const keyword = searchValue.toLowerCase();
+
+        if (tabKey === "friend") {
+            return friendList.filter((f: any) =>
+                f.fullName?.toLowerCase().includes(keyword)
+            );
+        }
+
+        return conversationList.filter((conv: any) => {
+            if (tabKey === "group" && conv.type !== "group") return false;
+            if (tabKey === "recent" && conv.type !== "group" && conv.type !== "single") return false;
+
+            const user =
+                conv.type === "single"
+                    ? conv.participants.find((p: any) => p._id !== currentUserId)
+                    : { fullName: conv.name };
+
+            return user?.fullName?.toLowerCase().includes(keyword);
         });
-    }, [searchValue, conversationList]);
+    }, [searchValue, tabKey, conversationList, friendList]);
 
     const handleToggle = (id: string) => {
-        setSelectedConversations(prev =>
-            prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+        setSelectedConversations((prev) =>
+            prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
         );
     };
 
@@ -52,15 +85,51 @@ const ForwardModal = ({ open, messageToForward, onClose }: ForwardModalProps) =>
         },
     });
 
-
-
     useEffect(() => {
         if (!open) {
             setSelectedConversations([]);
             setCustomMessage("");
             setSearchValue("");
+            setTabKey("recent");
         }
     }, [open]);
+
+    const renderConversationItem = (item: any) => {
+        const convId = item._id;
+        const user =
+            tabKey === "friend"
+                ? item
+                : item.type === "single"
+                    ? item.participants.find((p: any) => p._id !== currentUserId)
+                    : { fullName: item.name, avatar: item.avatar };
+
+        if (!user) return null;
+
+        return (
+            <div
+                key={convId}
+                className="flex items-center gap-2 hover:bg-gray-100 px-2 py-1 rounded cursor-pointer"
+                onClick={() => handleToggle(convId)}
+            >
+                <Checkbox checked={selectedConversations.includes(convId)} />
+                <div className="relative w-12 h-12">
+                    <div className="w-10 h-10 rounded-full border border-black bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-base overflow-hidden">
+                        {user.avatar ? (
+                            <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                        ) : (
+                            user.fullName
+                                ?.split(" ")
+                                .map((w: any) => w[0])
+                                .join("")
+                                .slice(0, 2)
+                                .toUpperCase()
+                        )}
+                    </div>
+                </div>
+                <span className="truncate">{user.fullName}</span>
+            </div>
+        );
+    };
 
     return (
         <Modal
@@ -71,13 +140,14 @@ const ForwardModal = ({ open, messageToForward, onClose }: ForwardModalProps) =>
                 forwardMutation.mutate({
                     messageId: messageToForward._id,
                     targetConversationIds: selectedConversations,
-                    // customMessage
                 })
             }
             okText="Chia sẻ"
-            okButtonProps={{ disabled: !selectedConversations.length, loading: forwardMutation.isPending }}
+            okButtonProps={{
+                disabled: !selectedConversations.length,
+                loading: forwardMutation.isPending,
+            }}
         >
-
             <Search
                 placeholder="Tìm kiếm..."
                 allowClear
@@ -86,46 +156,27 @@ const ForwardModal = ({ open, messageToForward, onClose }: ForwardModalProps) =>
                 className="mb-3"
             />
 
-            <Tabs defaultActiveKey="recent" className="mb-3">
+            <Tabs activeKey={tabKey} onChange={(key) => setTabKey(key as any)} className="mb-3">
                 <Tabs.TabPane tab="Gần đây" key="recent">
                     <div className="max-h-[250px] overflow-y-auto space-y-2">
-                        {filteredConversations.map((conv) => {
-                            const user = conv.participants.find(p => p._id !== currentUserId);
-                            if (!user) return null;
-
-                            return (
-                                <div
-                                    key={conv._id}
-                                    className="flex items-center gap-2 hover:bg-gray-100 px-2 py-1 rounded cursor-pointer"
-                                    onClick={() => handleToggle(conv._id)}
-                                >
-                                    <Checkbox checked={selectedConversations.includes(conv._id)} />
-                                    <div className="relative w-12 h-12">
-                                        <div className="w-10 h-10 rounded-full border-1 border-black bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-base">
-                                            {user.avatar || user.avatar !== "" ? (
-                                                <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover rounded-full" />
-                                            ) : (
-                                                user.fullName
-                                                    ?.split(" ")
-                                                    .map((w) => w[0])
-                                                    .join("")
-                                                    .slice(0, 2)
-                                                    .toUpperCase()
-                                            )}
-                                        </div>
-                                    </div>
-                                    <span className="truncate">{user.fullName}</span>
-                                </div>
-                            );
-                        })}
+                        {filteredConversations.map(renderConversationItem)}
                     </div>
                 </Tabs.TabPane>
-                <Tabs.TabPane tab="Nhóm trò chuyện" key="group" disabled />
-                <Tabs.TabPane tab="Bạn bè" key="friend" disabled />
+                <Tabs.TabPane tab="Nhóm trò chuyện" key="group">
+                    <div className="max-h-[250px] overflow-y-auto space-y-2">
+                        {filteredConversations.map(renderConversationItem)}
+                    </div>
+                </Tabs.TabPane>
+                <Tabs.TabPane tab="Bạn bè" key="friend">
+                    <div className="max-h-[250px] overflow-y-auto space-y-2">
+                        {filteredConversations.map(renderConversationItem)}
+                    </div>
+                </Tabs.TabPane>
             </Tabs>
 
             <div className="bg-gray-50 p-3 rounded border text-sm text-gray-600 mb-2">
-                <b>Chia sẻ tin nhắn</b>: {messageToForward?.type === "text"
+                <b>Chia sẻ tin nhắn</b>:{" "}
+                {messageToForward?.type === "text"
                     ? messageToForward.content
                     : messageToForward?.type === "image"
                         ? "[Hình ảnh]"

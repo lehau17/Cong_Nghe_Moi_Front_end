@@ -1,19 +1,13 @@
 import { getConversationDetailOrCreate, getMyConversations } from "@/apis/conversation.api";
 import { sendFriendRequest } from "@/apis/friend-request.api";
-import { getUserProfile, searchUserByPhone } from "@/apis/user.api";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { groupApi } from "@/apis/group.api";
+import { getUserProfile } from "@/apis/user.api";
 import { useChatContext } from "@/context/ChatContext";
 import { SocketContext } from "@/context/SocketContext";
 import { UserProfile } from "@/types/user.type";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useContext, useEffect, useState } from "react";
 import { FaUserFriends, FaUserPlus } from "react-icons/fa";
-import { IoMdMore } from "react-icons/io";
 import { IoClose } from "react-icons/io5";
 import { toast } from "react-toastify";
 import { useDebounce } from "react-use";
@@ -108,18 +102,6 @@ const ChatList = () => {
         onError: () => toast.error("Gửi lời mời kết bạn thất bại"),
     });
 
-    // Hàm dungf để tìm kiếm user theo số địẹn thoai
-    // enabled: false : đánh dấu để nó không tự động call
-    const { data: searchResult, refetch } = useQuery({
-        // khóa định danh duy nhất. dùng để kiểm soát cache
-        queryKey: ["searchUserByPhone", searchValue],
-        // Hàm để call API
-        queryFn: () => searchUserByPhone(searchValue),
-        // đánh dấu mặt định là không call.
-        enabled: false,
-    });
-
-    const userFound = searchResult?.data?.data;
 
     const handleFocus = () => {
         setIsSearching(true);
@@ -130,14 +112,24 @@ const ChatList = () => {
         setSearchValue(value);
     };
 
-    // sau 500ms nếu không có sự thay đổi thì mới call API
+
+
+    const { data: searchResultGroup, refetch: refetchGroupSearch } = useQuery({
+        queryKey: ["searchGroupOrFriend", searchValue],
+        queryFn: () => groupApi.search(searchValue),
+        enabled: false,
+    });
+
+    const searchResults = searchResultGroup?.data?.data || [];
+
     useDebounce(
         () => {
-            if (searchValue.length === 10) refetch();
+            if (searchValue.trim().length >= 2) refetchGroupSearch();
         },
         500,
         [searchValue]
     );
+
 
     const handleClear = () => {
         setSearchValue("");
@@ -210,63 +202,53 @@ const ChatList = () => {
             <div className="overflow-auto flex-1">
                 {isSearching && searchValue ? (
                     <div className="text-sm text-gray-700">
-                        {userFound ? (
-                            <div
-                                className="group relative flex justify-between items-center hover:bg-gray-[50] p-2 rounded-md"
-                                onClick={() => handleSelectUser(userFound)}
-                            >
-                                <div className="flex items-center">
-                                    <div className="w-10 h-10 rounded-full mr-2 border-1 border-black  bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-sm">
-                                        {userFound.avatar && userFound.avatar !== "" ? (
-                                            <img src={userFound.avatar} className="w-full h-full object-cover rounded-full" alt="avatar" />
-                                        ) : (
-                                            userFound.fullName
-                                                ?.split(" ")
-                                                .map((w) => w[0])
-                                                .join("")
-                                                .slice(0, 2)
-                                                .toUpperCase()
-                                        )}
-                                    </div>
+                        {searchResults.length > 0 ? (
+                            searchResults.map((item: any) => {
+                                const isGroup = item.type === "group";
+                                const displayName = isGroup ? item.name : item.fullName;
+                                const displayAvatar = isGroup ? item.avatar : item.avatar;
 
-                                    <div>
-                                        <div className="font-semibold">{userFound.fullName}</div>
-                                        <div className="text-sm text-gray-500">
-                                            Số điện thoại: {userFound.phoneNumber}
+                                return (
+                                    <div
+                                        key={item._id}
+                                        className="group relative flex justify-between items-center hover:bg-gray-100 p-2 rounded-md cursor-pointer"
+                                        onClick={() =>
+                                            isGroup
+                                                ? handleSelectGroup(item)
+                                                : handleSelectUser(item)
+                                        }
+                                    >
+                                        <div className="flex items-center px-2 py-2">
+                                            <div className="w-12 h-12 rounded-full mr-2 border-1 border-black bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-sm">
+                                                {displayAvatar ? (
+                                                    <img
+                                                        src={displayAvatar}
+                                                        className="w-full h-full object-cover rounded-full"
+                                                        alt="avatar"
+                                                    />
+                                                ) : (
+                                                    displayName
+                                                        ?.split(" ")
+                                                        .map((w: string) => w[0])
+                                                        .join("")
+                                                        .slice(0, 2)
+                                                        .toUpperCase()
+                                                )}
+                                            </div>
+                                            <div className="gap-2 flex flex-col">
+                                                <div className="font-semibold text-start">{displayName}</div>
+                                                <div className="text-sm text-gray-500 text-start">
+                                                    {isGroup ? "Nhóm trò chuyện" : "Bạn bè"}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <button className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <IoMdMore className="text-xl text-gray-600" />
-                                        </button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent
-                                        className="w-56 bg-white rounded-xl shadow-xl border text-sm p-1"
-                                        align="end"
-                                    >
-                                        <DropdownMenuItem className="px-3 py-2 rounded-md hover:bg-gray-100 cursor-pointer text-start">
-                                            Thêm vào nhóm
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem
-                                            className="px-3 py-2 rounded-md hover:bg-gray-100 cursor-pointer text-start"
-                                            onClick={() => userFound?._id && sendFriendMutation.mutate(userFound._id)}
-                                        >
-                                            Gửi lời mời kết bạn
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem className="px-3 py-2 rounded-md hover:bg-gray-100 cursor-pointer text-start">
-                                            Báo xấu
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem className="px-3 py-2 rounded-md hover:bg-red-50 text-red-500 cursor-pointer text-start">
-                                            Xoá hội thoại
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </div>
+                                );
+                            })
                         ) : (
-                            <div className="italic text-gray-400 px-4 py-2">Không tìm thấy người dùng</div>
+                            <div className="italic text-gray-400 px-4 py-2">Không tìm thấy kết quả</div>
                         )}
+
                     </div>
                 ) : (
                     conversationList.map((conv) => {

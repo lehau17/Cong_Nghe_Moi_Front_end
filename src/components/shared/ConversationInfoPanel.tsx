@@ -647,21 +647,25 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
                 open={openImageModal}
                 onCancel={() => setOpenImageModal(false)}
                 footer={null}
-                width={800}
-                bodyStyle={{ height: 550, padding: 0 }}
+                width={1000}
+                bodyStyle={{ height: 650, margin: 20 }}
             >
-                <div className="flex flex-col h-full">
+                <div className="flex flex-row h-full">
                     {/* Top preview */}
                     <div className="flex-1 flex items-center justify-center bg-black">
                         {activeImage ? (
-                            <img src={activeImage} alt="active" className="max-h-full max-w-full" />
+                            <img
+                                src={activeImage}
+                                alt="active"
+                                className="max-h-[100%] max-w-[100%] object-contain"
+                            />
                         ) : (
                             <span className="text-white">No image selected</span>
                         )}
                     </div>
 
                     {/* Bottom thumbnails */}
-                    <div className="flex overflow-x-auto border-t p-3 gap-2 bg-gray-100">
+                    <div className="flex flex-col overflow-x-auto border-t p-3 gap-2 bg-gray-100">
                         {infoData?.data?.mediaMessages
                             ?.flatMap((msg: any) =>
                                 msg.fileMeta
@@ -673,7 +677,7 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
                                     key={idx}
                                     src={url}
                                     alt={`thumb-${idx}`}
-                                    className={`h-20 w-auto object-cover rounded cursor-pointer border ${url === activeImage ? "border-blue-500" : "border-transparent"
+                                    className={`h-25 w-auto object-cover rounded cursor-pointer border ${url === activeImage ? "border-blue-500" : "border-transparent"
                                         }`}
                                     onClick={() => setActiveImage(url)}
                                 />

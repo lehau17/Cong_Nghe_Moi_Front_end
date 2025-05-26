@@ -150,7 +150,7 @@ export default function CreateGroupModal({ open, onClose, userIds }: { open: boo
                             <div key={letter}>
                                 <div className="p-5 font-bold text-gray-600 text-sm text-start">{letter}</div>
                                 {users.map((friend) => {
-                                    const isChecked = selected.includes(friend._id);
+                                    const isChecked = selected?.includes(friend._id);
 
                                     return (
                                         <label
