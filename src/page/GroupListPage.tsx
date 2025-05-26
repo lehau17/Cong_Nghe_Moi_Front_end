@@ -67,6 +67,7 @@ const GroupListPage = () => {
     // các lựa chọn trong menu con
     // chọn caí nào thì xử lý cái đó
     const handleMenuClick = (action: string, fs_id: string, friend_id?: string) => {
+        console.log(action, fs_id, friend_id)
         // switch (action) {
         //     case "view_info":
         //         setUserSelect(friend_id!)
@@ -113,6 +114,7 @@ const GroupListPage = () => {
             },
         });
     };
+    console.log(showConfirmDelete)
 
     // bắt sự kiện websocket
     useEffect(() => {
