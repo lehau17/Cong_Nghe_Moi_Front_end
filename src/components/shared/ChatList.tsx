@@ -20,53 +20,102 @@ import { useDebounce } from "react-use";
 import CreateGroupModal from "./CreateGroupModal";
 import FriendSearchModal from "./FriendSearchModal";
 
+// Giao diện hiển thị danh sách ngừoi nhắn tin
 const ChatList = () => {
+    // socket IO . dùng để xử lý real time
     const socket = useContext(SocketContext);
+    // lưu tữ giá trị search. măht định là rông
+    // nếu người dùng nhập giá trị vào input
+    // gọi hàm setSearchValue để cập nhật giá trị search
     const [searchValue, setSearchValue] = useState("");
+    // Kiểm soát trang thái search
+    // mạtư định là false vì nó chưa seach
+    // nếu người dùng nhấn vào thanh search hoạt bắt đầu search
+    // thì chuyển trạng thái thành true
     const [isSearching, setIsSearching] = useState(false);
+    // Thoong tin userId của mình
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    // Dùng để kiểm soat ẩn hiện của model TÌm kiếm bạn bè
+    // mặt định là false vì nó không hiện
+    // nhấn vào nút tìm kiếm bạn bè thì nó sẽ chuyển thành true
+    // Model hiện thỉ bạn bè sẽ hiện lên
+    // tắt thì chuyển lại thành false
     const [showFriendModal, setShowFriendModal] = useState(false);
+    // Dùng để kiểm soat ẩn hiện của model Tạo nhóm
+    // mặt định là false vì nó không hiện
+    // nhấn vào nút tạo nhóm thì nó sẽ chuyển thành true
+    // Model hiện thỉ bạn bè sẽ hiện lên
+    // tắt thì chuyển lại thành false
     const [showCreateGroup, setShowCreateGroup] = useState(false);
 
+    // Lưu thông tin chat global
+    // dùng useContext của react để lưu thông tin
     const {
+        // kiểm soát user nào đang sử dụng hiện tại
         setActiveUser,
+        // Hàm dùng để cập nhật lại id của conversation mình đang muốn join vào
         setConversationId,
+        // biến chứa conversation hiện tại
         conversationId,
+        // danh sách conversation
         conversationList,
+        // hàm dùng để set lại conversation
         setConversationList,
     } = useChatContext();
 
+    // Hàm dùng để lấy thồng tin của user hiện tại
+    // dùng tanstack query và axios
     const { data: profile } = useQuery({
         queryKey: ["userProfile"],
         queryFn: getUserProfile,
     });
 
+    // userEffect dùng để kiểm soát trạng thái và re render giao diện
+    // kiểm soát trạng tháo biến profile
+    // nếu biến profile thay đổi
+    // cap nhật lại currentUserId
     useEffect(() => {
         if (profile?.data?.data?._id) {
             setCurrentUserId(profile.data.data._id);
         }
     }, [profile]);
 
+
+    // Lấy danh sách conversation
+    // dùng tanstack query và axios
+    // useQuery sẽ tự động chạy mỗi khi được gọi
     const { data: conversations, isSuccess } = useQuery({
         queryKey: ["myConversations"],
         queryFn: getMyConversations,
     });
 
+    // useEfect này dùng để kiểm soát biến isSuccess
     useEffect(() => {
+        // Nếu thành coong. cập nhật lại danh sách conversation
         if (isSuccess) {
             setConversationList(conversations.data.data);
         }
     }, [isSuccess]);
 
+    // Hàm nayf dùng để gửi lời mời kết bạn
+    // dùng tanstack query và axios
     const sendFriendMutation = useMutation({
+        // gọi api
         mutationFn: (toId: string) => sendFriendRequest(toId),
+        // Thành công : thông báo ra giao diện
         onSuccess: () => toast.success("Gửi lời mời kết bạn thành công !"),
+        // Thất bại: thông báo ra giao diện
         onError: () => toast.error("Gửi lời mời kết bạn thất bại"),
     });
 
+    // Hàm dungf để tìm kiếm user theo số địẹn thoai
+    // enabled: false : đánh dấu để nó không tự động call
     const { data: searchResult, refetch } = useQuery({
+        // khóa định danh duy nhất. dùng để kiểm soát cache
         queryKey: ["searchUserByPhone", searchValue],
+        // Hàm để call API
         queryFn: () => searchUserByPhone(searchValue),
+        // đánh dấu mặt định là không call.
         enabled: false,
     });
 
@@ -81,6 +130,7 @@ const ChatList = () => {
         setSearchValue(value);
     };
 
+    // sau 500ms nếu không có sự thay đổi thì mới call API
     useDebounce(
         () => {
             if (searchValue.length === 10) refetch();
@@ -94,16 +144,9 @@ const ChatList = () => {
         setIsSearching(false);
     };
 
-
-    useEffect(() => {
-
-
-        return () => {
-
-        }
-    }, [])
-
-
+    // khi nhấn vào 1 conversation.
+    // Mình sẽ set lại conversation global cho nó
+    // bắn sự kiện join room cho be xử lý
     const handleSelectGroup = (conv: any) => {
         setConversationId(conv._id);
         setActiveUser({
@@ -163,15 +206,6 @@ const ChatList = () => {
                 {/* <IoMdMore className="text-gray-600 ml-2 cursor-pointer text-xl" /> */}
             </div>
 
-            {!isSearching && (
-                <div className="flex border-b px-4 text-gray-600 pt-3 text-sm">
-                    <div className="mr-4 font-semibold border-b-2 border-blue-600 pb-2 text-blue-600">
-                        Tất cả
-                    </div>
-                    <div className="mr-4 pb-2 cursor-pointer">Chưa đọc</div>
-                    <div className="ml-auto pb-2 cursor-pointer">Phân loại ▾</div>
-                </div>
-            )}
 
             <div className="overflow-auto flex-1">
                 {isSearching && searchValue ? (
@@ -287,6 +321,7 @@ const ChatList = () => {
                     })
                 )}
             </div>
+            {/* Model tìm kiếm bạn bè */}
             <FriendSearchModal
                 open={showFriendModal}
                 onClose={() => setShowFriendModal(false)}

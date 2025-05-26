@@ -20,10 +20,12 @@ const FriendRequestPage = () => {
     // cần id của cái lời mời kết bạn để chấp nhận
     const acceptMutation = useAcceptFriendRequest({
         onMutate: (id) => setLoadingId(id), // Bắt đầu gọi API thì set loading
+        // Nếu thành công. Lấy lại danh sách lời mời kết bạn
         onSuccess: () => {
             refetch();
             setLoadingId(null); // Xóa loading sau khi gọi xong
         },
+        // Lỗi thì tắt loading rồi bỏ qua :0
         onError: () => setLoadingId(null), // Xóa loading nếu lỗi
     });
 
@@ -32,10 +34,12 @@ const FriendRequestPage = () => {
     // cần id của cái lời mời kết bạn để chấp nhận
     const rejectMutation = useRejectFriendRequest({
         onMutate: (id) => setLoadingId(id),
+        // Nếu thành công. Lấy lại danh sách lời mời kết bạn
         onSuccess: () => {
             refetch();
             setLoadingId(null);
         },
+        // Lỗi thì tắt loading rồi bỏ qua :0
         onError: () => setLoadingId(null),
     });
 
