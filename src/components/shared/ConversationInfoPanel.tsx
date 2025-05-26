@@ -4,7 +4,7 @@ import { useChatContext } from "@/context/ChatContext";
 import { useUpdateGroupAvatar, useUpdateGroupName } from "@/hooks/useUpdateGroupAvatar";
 import http from "@/lib/http";
 import { useDisbandGroup } from "@/queries/conversation.query";
-import { LeftOutlined, MoreOutlined, XOutlined } from "@ant-design/icons";
+import { LeftOutlined, LoadingOutlined, MoreOutlined, XOutlined } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Avatar, Checkbox, Dropdown, Input, Menu, Switch } from "antd";
 import { useState } from "react";
@@ -27,7 +27,7 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
     const [conversationData, setConversationData] = useState(conversation);
     const [isEditingName, setIsEditingName] = useState(false);
     const [newName, setNewName] = useState(conversationData.name || conversationData.participants.find((e: any) => e._id !== currentUserId)?.fullName);
-    const { updateName } = useUpdateGroupName(conversation._id, (updatedName: string) => {
+    const { updateName, isLoading: isLoadingUpdateUsername } = useUpdateGroupName(conversation._id, (updatedName: string) => {
         setConversationData((prev: any) => ({ ...prev, name: updatedName, fullName: updatedName }));
         setIsEditingName(false);
     });
@@ -43,7 +43,7 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
     const { data: infoData } = useQuery({
         queryKey: ["conversation-info", conversation._id],
         queryFn: async () => {
-            const res = await http.get(`/conversation/${conversation._id}/infomation`);
+            const res = await http.get(`/conversation/${conversation._id}/infomation`, { params: { type: conversation?.type } });
             return res.data
         },
         enabled: !!conversation?._id,
@@ -122,7 +122,6 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
     const leaveGroupMutation = useMutation({
         mutationFn: (groupId: string) => leaveGroup(groupId),
         onSuccess: () => {
-            toast.success("🚪 Đã rời khỏi nhóm");
             setConversationId(null);
             setMessages([]);
             setActiveUser(null);
@@ -448,8 +447,9 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
                                             <button
                                                 className="text-gray-500 hover:text-blue-500 text-sm"
                                                 onClick={() => setIsEditingName(true)}
+                                                disabled={isLoadingUpdateUsername}
                                             >
-                                                ✏️
+                                                {!isLoadingUpdateUsername ? '✏️' : <LoadingOutlined />}
                                             </button>
                                         )}
                                     </>
@@ -493,12 +493,14 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-3 gap-4 mt-5 text-center text-sm">
-                                <div className="flex flex-col items-center text-gray-600 cursor-pointer">
-                                    <span className="text-xl">👥</span>
-                                    <span className="text-[12px]">Tạo nhóm trò chuyện</span>
+                            {
+                                !isGroup && <div className="grid grid-cols-3 gap-4 mt-5 text-center text-sm">
+                                    <div className="flex flex-col items-center text-gray-600 cursor-pointer">
+                                        <span className="text-xl">👥</span>
+                                        <span className="text-[12px]">Tạo nhóm trò chuyện</span>
+                                    </div>
                                 </div>
-                            </div>
+                            }
                         </div>
 
                         {/* Info List */}
@@ -507,16 +509,17 @@ const ConversationInfoPanel = ({ onClose, conversation, currentUserRole = "membe
                             <div className="flex items-center gap-2">
                                 <span className="text-lg">👥</span>
                                 <span>
-                                    {infoData?.data?.sharedGroupCounts?.length ?? 0} nhóm chung
+                                    {!isGroup ? `${infoData?.data?.sharedGroupCounts?.length ?? 0} nhóm chung` : `${infoData?.data?.participants.length ?? 0}` + " thành viên"}
+
                                 </span>
                             </div>
 
 
-                            {conversationData.type !== "single" && <div className="flex items-center justify-between w-full px-4 mt-4">
-                                <div className="flex flex-col text-sm text-gray-700">
-                                    <span>🔒 Duyệt thành viên</span>
-                                    <span className="text-xs text-gray-500">Chỉ owner mới có thể chỉnh</span>
+                            {conversationData.type !== "single" && <div className="flex justify-between w-full mt-4">
+                                <div className="text-sm text-gray-700 items-center">
+                                    <div>🔒 Duyệt thành viên</div>
                                 </div>
+
 
                                 {currentUserRole === "owner" && (
                                     <Switch

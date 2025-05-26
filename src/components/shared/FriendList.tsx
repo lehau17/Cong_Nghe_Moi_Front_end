@@ -14,7 +14,7 @@ const typeFriendList = [
     },
     {
         _id: 2,
-        name: "Danh sách nhóm và công đồng",
+        name: "Danh sách nhóm",
         icon: <UsergroupAddOutlined />,
         onClick: (navigate: NavigateFunction) => {
             navigate("groups")

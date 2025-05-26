@@ -74,5 +74,6 @@ export const acceptInvite = async (inviteId: string) => {
 };
 
 export const rejectInvite = async (inviteId: string) => {
+
     return await http.post(`/pendingGroupInvite/${inviteId}/reject`);
 };

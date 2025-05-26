@@ -63,9 +63,7 @@ export const useUpdateGroupName = (
             return response.data?.data?.name
         },
         onSuccess: (newName) => {
-            console.log(newName)
 
-            toast.success("✅ Tên nhóm đã được cập nhật");
             if (onSuccessUpdate) onSuccessUpdate(newName);
         },
         onError: () => {

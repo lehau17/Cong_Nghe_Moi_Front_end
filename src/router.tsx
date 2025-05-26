@@ -5,6 +5,7 @@ import ForgotPasswordPage from "./page/ForgotPasswordPage";
 import FriendListPage from "./page/FriendListPage";
 import FriendRequestPage from "./page/FriendRequestPage";
 import GeneralPageSetting from "./page/GeneralPageSetting";
+import GroupListPage from './page/GroupListPage';
 import LoginPage from "./page/LoginPage";
 import RegisterPage from "./page/RegisterPage";
 import SettingFastMessagePage from "./page/SettingFastMessagePage";
@@ -78,6 +79,7 @@ const AppRouter = () => {
 
 
                     <Route path="friend-request" element={<FriendRequestPage />} />
+                    <Route path="groups" element={<GroupListPage />} />
                 </Route>
 
 

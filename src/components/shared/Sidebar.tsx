@@ -23,7 +23,7 @@ const Sidebar = () => {
     const user = userProfile ? JSON.parse(userProfile) : null;
     const userName = user?.fullName || "Người dùng";
     const userAvatar = user?.avatar;
-
+    console.log("check user", user)
     return (
         <>
             <div className="w-16 bg-blue-600 h-screen flex flex-col items-center py-4 space-y-6 text-white">
