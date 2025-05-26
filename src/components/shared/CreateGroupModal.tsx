@@ -205,7 +205,7 @@ export default function CreateGroupModal({ open, onClose, userIds }: { open: boo
                     <Button
                         type="primary"
                         loading={createGroupMutation.isPending}
-                        disabled={selected.length < 1 || !groupName.trim()}
+                        disabled={selected?.length < 1 || !groupName.trim()}
                         onClick={handleCreateGroup}
                     >
                         Tạo nhóm

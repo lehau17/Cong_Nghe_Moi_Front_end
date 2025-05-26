@@ -15,7 +15,7 @@ import {
     UndoOutlined
 } from "@ant-design/icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Avatar, Button, Dropdown, Menu, Tooltip } from "antd";
+import { Avatar, Button, Dropdown, Input, Menu, Tooltip } from "antd";
 import EmojiPicker from "emoji-picker-react";
 import { Reply } from "lucide-react";
 import { forwardRef, useContext, useEffect, useMemo, useRef, useState } from "react";
@@ -346,6 +346,10 @@ const ChatWindow = () => {
     const [pendingFiles, setPendingFiles] = useState<any[]>([]);
     const uploadMultiFileMutation = useUploadMultiFileMessage(conversationId as string);
     const socket = useContext(SocketContext)
+    const [searchTerm, setSearchTerm] = useState("");
+    const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [showSearchModal, setShowSearchModal] = useState(false);
+
     const { setShowCallUI, setCallInfo } = useCallContext();
 
     const handlePickOtherFiles = () => {
@@ -575,6 +579,19 @@ const ChatWindow = () => {
 
 
 
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.key === 'f') {
+                e.preventDefault();
+                setShowSearchModal(true);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
+
+
+
 
     // Lấy danh sách participants
     const participants = activeConversation?.participants || [];
@@ -644,221 +661,270 @@ const ChatWindow = () => {
 
 
     return (
-        <div className="flex flex-col h-screen bg-[#f0f2f5]">
-            {/* Header */}
-            <div className="flex items-center justify-between p-3 border-b bg-white shadow-sm">
-                <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 rounded-full border border-black bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-base overflow-hidden">
-                        {(activeConversation?.type === "group"
-                            ? activeConversation?.avatar
-                            : activeUser?.avatar) ? (
-                            <img
-                                src={
-                                    activeConversation?.type === "group"
-                                        ? activeConversation.avatar
-                                        : activeUser.avatar
-                                }
-                                alt="Avatar"
-                                className="w-full h-full object-cover rounded-full"
-                            />
-                        ) : (
-                            (activeConversation?.type === "group"
-                                ? activeConversation?.name
-                                : activeUser?.fullName
-                            )
-                                ?.split(" ")
-                                .map((w) => w[0])
-                                .join("")
-                                .slice(0, 2)
-                                .toUpperCase()
-                        )}
-                    </div>
-
-                    <div className="ml-3">
-                        <div className="font-semibold text-[16px] text-start">
-                            {activeConversation?.type === "group"
-                                ? activeConversation?.name
-                                : activeUser?.fullName}
-                        </div>
-                        <div className="text-sm text-gray-500 text-start">
-                            {activeConversation?.type === "group"
-                                && `${activeConversation?.participants?.length || 0} thành viên`}
-                        </div>
-                    </div>
-                </div>
-                <div className="flex items-center space-x-4 text-xl text-gray-600">
-                    <IoCallOutline className="cursor-pointer" onClick={handleStartCall} />
-                    <IoVideocamOutline className="cursor-pointer" />
-                    <IoSearchOutline className="cursor-pointer" />
-                    <MoreOutlined className="cursor-pointer" onClick={() => setShowInfo(!showInfo)} />
-                </div>
-            </div>
-
-
-            {/* Messages */}
-            <div className="flex-1 min-h-0 flex flex-col overflow-y-auto" onClick={() => showInfo && setShowInfo(false)}>
-                {isLoading ? (
-                    <div className="text-gray-500 italic">Đang tải tin nhắn...</div>
-                ) : (
-
-                    allMessages.map((msg: any, index: number) => {
-                        const isMine = msg.sender._id === currentUserId;
-                        const isLast = index === allMessages.length - 1;
-                        const prevMsg = messages[index - 1];
-                        const isShowAvatar =
-                            !isMine &&
-                            (!prevMsg || prevMsg.sender._id !== msg.sender._id); // avatar nếu khác sender trước đó
-
-                        return (
-                            <div key={msg._id} className="relative group">
-
-                                <MessageItem
-                                    ref={(el) => { messageRefs.current[msg._id] = el; }} // ✅ Không return gì cả
-                                    // 👈 Gắn đúng ref ở đây
-                                    currentUserId
-                                    key={msg._id}
-                                    msg={msg}
-                                    isLast={isLast}
-                                    isMine={isMine}
-                                    setReplyTo={setReplyTo}
-                                    scrollToMessage={scrollToMessage}
-                                    isShowAvatar={isShowAvatar}
-                                    refetch={refetch}
-                                    onForward={(msg) => setForwardMessage(msg)}
-                                    isSelected={!!selectedMessages.find(m => m._id === msg._id)}
-                                    onToggleSelected={() => toggleSelectedMessage(msg)}
-                                    userList={participants}
+        <>
+            <div className="flex flex-col h-screen bg-[#f0f2f5]">
+                {/* Header */}
+                <div className="flex items-center justify-between p-3 border-b bg-white shadow-sm">
+                    <div className="flex items-center space-x-3">
+                        <div className="w-12 h-12 rounded-full border border-black bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-base overflow-hidden">
+                            {(activeConversation?.type === "group"
+                                ? activeConversation?.avatar
+                                : activeUser?.avatar) ? (
+                                <img
+                                    src={
+                                        activeConversation?.type === "group"
+                                            ? activeConversation.avatar
+                                            : activeUser.avatar
+                                    }
+                                    alt="Avatar"
+                                    className="w-full h-full object-cover rounded-full"
                                 />
+                            ) : (
+                                (activeConversation?.type === "group"
+                                    ? activeConversation?.name
+                                    : activeUser?.fullName
+                                )
+                                    ?.split(" ")
+                                    .map((w) => w[0])
+                                    .join("")
+                                    .slice(0, 2)
+                                    .toUpperCase()
+                            )}
+                        </div>
 
+                        <div className="ml-3">
+                            <div className="font-semibold text-[16px] text-start">
+                                {activeConversation?.type === "group"
+                                    ? activeConversation?.name
+                                    : activeUser?.fullName}
                             </div>
+                            <div className="text-sm text-gray-500 text-start">
+                                {activeConversation?.type === "group"
+                                    && `${activeConversation?.participants?.length || 0} thành viên`}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="flex items-center space-x-4 text-xl text-gray-600">
+                        <IoCallOutline className="cursor-pointer" onClick={handleStartCall} />
+                        <IoVideocamOutline className="cursor-pointer" />
+                        <IoSearchOutline className="cursor-pointer" onClick={() => setShowSearchModal(true)} />
+
+                        <MoreOutlined className="cursor-pointer" onClick={() => setShowInfo(!showInfo)} />
+                    </div>
+                </div>
 
 
-                        )
-                    })
+                {/* Messages */}
+                <div className="flex-1 min-h-0 flex flex-col overflow-y-auto" onClick={() => showInfo && setShowInfo(false)}>
+                    {isLoading ? (
+                        <div className="text-gray-500 italic">Đang tải tin nhắn...</div>
+                    ) : (
+
+                        allMessages.map((msg: any, index: number) => {
+                            const isMine = msg.sender._id === currentUserId;
+                            const isLast = index === allMessages.length - 1;
+                            const prevMsg = messages[index - 1];
+                            const isShowAvatar =
+                                !isMine &&
+                                (!prevMsg || prevMsg.sender._id !== msg.sender._id); // avatar nếu khác sender trước đó
+
+                            return (
+                                <div key={msg._id} className="relative group">
+
+                                    <MessageItem
+                                        ref={(el) => { messageRefs.current[msg._id] = el; }} // ✅ Không return gì cả
+                                        // 👈 Gắn đúng ref ở đây
+                                        currentUserId
+                                        key={msg._id}
+                                        msg={msg}
+                                        isLast={isLast}
+                                        isMine={isMine}
+                                        setReplyTo={setReplyTo}
+                                        scrollToMessage={scrollToMessage}
+                                        isShowAvatar={isShowAvatar}
+                                        refetch={refetch}
+                                        onForward={(msg) => setForwardMessage(msg)}
+                                        isSelected={!!selectedMessages.find(m => m._id === msg._id)}
+                                        onToggleSelected={() => toggleSelectedMessage(msg)}
+                                        userList={participants}
+                                    />
+
+                                </div>
+
+
+                            )
+                        })
+                    )}
+                    <div ref={endRef} />
+                </div>
+
+                {/* Input */}
+                {replyTo && (
+                    <div className="px-3 py-2 border-t bg-gray-50 flex justify-between items-center">
+                        <div className="text-sm text-gray-600 max-w-[80%] truncate">
+                            <span className="font-semibold mr-1">Trả lời:</span>
+                            {replyTo.type === "text" ? replyTo.content
+                                : replyTo.type === "image" ? "[Hình ảnh]"
+                                    : replyTo.type === "audio" ? "[Âm thanh]"
+                                        : "[Tin nhắn]"}
+                        </div>
+                        <button onClick={() => setReplyTo(null)} className="text-gray-500 hover:text-red-500 text-lg">×</button>
+                    </div>
                 )}
-                <div ref={endRef} />
+                <div className="border-t bg-white px-3 py-2">
+                    <div className="flex items-center gap-2 relative">
+                        <div className="relative" ref={emojiRef}>
+                            <SmileOutlined
+                                className="text-xl cursor-pointer"
+                                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                            />
+                            {showEmojiPicker && (
+                                <div className="absolute bottom-12 left-0 z-50">
+                                    <EmojiPicker onEmojiClick={handleEmojiClick} height={350} width={300} />
+                                </div>
+                            )}
+                        </div>
+                        <PaperClipOutlined className="text-xl cursor-pointer" onClick={handlePickOtherFiles} />
+                        <input
+                            type="file"
+                            multiple
+                            accept="audio/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,video/*,application/zip,application/json"
+
+                            hidden
+                            ref={fileOtherInputRef}
+                            onChange={handleOtherFilesSelected}
+                        />
+
+                        <PictureOutlined className="text-xl cursor-pointer" onClick={handlePickImages} />
+                        <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            hidden
+                            ref={fileInputRef}
+                            onChange={handleImagesSelected}
+                        />
+
+                        <div className="relative flex items-center">
+                            <AudioOutlined
+                                className={`text-xl cursor-pointer ${recording ? "text-red-500" : ""}`}
+                                onClick={recording ? stopRecording : startRecording}
+                            />
+                            {recording && (
+                                <div className="absolute -top-8 left-1/2 -translate-x-1/2 flex gap-[4px]">
+                                    {pulseBars.map((_, i) => {
+                                        const randomDelay = Math.random() * 0.3;
+                                        const randomDuration = 0.8 + Math.random() * 0.6; // từ 0.8s → 1.4s
+                                        return (
+                                            <div
+                                                key={i}
+                                                style={{
+                                                    width: 5,
+                                                    height: 12,
+                                                    backgroundColor: "#22c55e",
+                                                    borderRadius: 2,
+                                                    animation: `waveAnim ${randomDuration}s ease-in-out infinite`,
+                                                    animationDelay: `${randomDelay}s`,
+                                                }}
+                                            />
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                        </div>
+
+                        <div className="flex-1">
+                            <input
+                                ref={inputRef}
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onCompositionStart={() => setIsComposing(true)}
+                                onCompositionEnd={() => setIsComposing(false)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" && !isComposing) {
+                                        e.preventDefault();
+                                        handleSend();
+                                    }
+                                }}
+                                placeholder={`Nhập @, tin nhắn tới ${activeUser.fullName}`}
+                                className="w-full bg-gray-100 p-2 rounded-xl border border-gray-300 outline-none"
+                            />
+                        </div>
+                        <Button onClick={handleSend}>
+                            <SendOutlined />
+                        </Button>
+                    </div>
+                </div>
+                {forwardMessage && (
+                    <ForwardModal
+                        open={!!forwardMessage}
+                        messageToForward={forwardMessage} // chỉ 1 tin nhắn được chọn
+                        onClose={() => setForwardMessage(null)}
+                    />
+                )}
+
+
+
+                {showInfo && activeConversation && (
+                    <ConversationInfoPanel
+                        key={activeConversation._id + activeConversation.updatedAt} // 🔥 ép render mới mỗi khi updatedAt thay đổi
+                        onClose={() => setShowInfo(false)}
+                        currentUserRole={role || "member"}
+                        conversation={activeConversation}
+                    />
+                )}
+
+
+
+
+
+
             </div>
 
-            {/* Input */}
-            {replyTo && (
-                <div className="px-3 py-2 border-t bg-gray-50 flex justify-between items-center">
-                    <div className="text-sm text-gray-600 max-w-[80%] truncate">
-                        <span className="font-semibold mr-1">Trả lời:</span>
-                        {replyTo.type === "text" ? replyTo.content
-                            : replyTo.type === "image" ? "[Hình ảnh]"
-                                : replyTo.type === "audio" ? "[Âm thanh]"
-                                    : "[Tin nhắn]"}
-                    </div>
-                    <button onClick={() => setReplyTo(null)} className="text-gray-500 hover:text-red-500 text-lg">×</button>
-                </div>
-            )}
-            <div className="border-t bg-white px-3 py-2">
-                <div className="flex items-center gap-2 relative">
-                    <div className="relative" ref={emojiRef}>
-                        <SmileOutlined
-                            className="text-xl cursor-pointer"
-                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                        />
-                        {showEmojiPicker && (
-                            <div className="absolute bottom-12 left-0 z-50">
-                                <EmojiPicker onEmojiClick={handleEmojiClick} height={350} width={300} />
-                            </div>
-                        )}
-                    </div>
-                    <PaperClipOutlined className="text-xl cursor-pointer" onClick={handlePickOtherFiles} />
-                    <input
-                        type="file"
-                        multiple
-                        accept="audio/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,video/*,application/zip,application/json"
 
-                        hidden
-                        ref={fileOtherInputRef}
-                        onChange={handleOtherFilesSelected}
-                    />
-
-                    <PictureOutlined className="text-xl cursor-pointer" onClick={handlePickImages} />
-                    <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        hidden
-                        ref={fileInputRef}
-                        onChange={handleImagesSelected}
-                    />
-
-                    <div className="relative flex items-center">
-                        <AudioOutlined
-                            className={`text-xl cursor-pointer ${recording ? "text-red-500" : ""}`}
-                            onClick={recording ? stopRecording : startRecording}
-                        />
-                        {recording && (
-                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 flex gap-[4px]">
-                                {pulseBars.map((_, i) => {
-                                    const randomDelay = Math.random() * 0.3;
-                                    const randomDuration = 0.8 + Math.random() * 0.6; // từ 0.8s → 1.4s
-                                    return (
-                                        <div
-                                            key={i}
-                                            style={{
-                                                width: 5,
-                                                height: 12,
-                                                backgroundColor: "#22c55e",
-                                                borderRadius: 2,
-                                                animation: `waveAnim ${randomDuration}s ease-in-out infinite`,
-                                                animationDelay: `${randomDelay}s`,
-                                            }}
-                                        />
+            {showSearchModal && (
+                <div className="absolute top-16 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-xl bg-white border rounded-lg shadow-lg p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Input
+                            placeholder="Tìm nội dung tin nhắn..."
+                            value={searchTerm}
+                            onChange={(e) => {
+                                const keyword = e.target.value;
+                                setSearchTerm(keyword);
+                                if (keyword.trim().length > 0) {
+                                    const filtered = messages.filter((msg) =>
+                                        msg.content?.toLowerCase().includes(keyword.toLowerCase())
                                     );
-                                })}
-                            </div>
-                        )}
-
-                    </div>
-
-                    <div className="flex-1">
-                        <input
-                            ref={inputRef}
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onCompositionStart={() => setIsComposing(true)}
-                            onCompositionEnd={() => setIsComposing(false)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter" && !isComposing) {
-                                    e.preventDefault();
-                                    handleSend();
+                                    setSearchResults(filtered);
+                                } else {
+                                    setSearchResults([]);
                                 }
                             }}
-                            placeholder={`Nhập @, tin nhắn tới ${activeUser.fullName}`}
-                            className="w-full bg-gray-100 p-2 rounded-xl border border-gray-300 outline-none"
                         />
+                        <Button onClick={() => setShowSearchModal(false)}>Đóng</Button>
                     </div>
-                    <Button onClick={handleSend}>
-                        <SendOutlined />
-                    </Button>
+
+                    <div className="max-h-[300px] overflow-y-auto space-y-2">
+                        {searchResults.length === 0 && <p className="text-gray-400 italic">Không tìm thấy tin nhắn</p>}
+                        {searchResults.map((msg) => (
+                            <div
+                                key={msg._id}
+                                onClick={() => {
+                                    setShowSearchModal(false);
+                                    scrollToMessage(msg._id); // dùng hàm scroll sẵn có
+                                }}
+                                className="p-2 border rounded hover:bg-gray-100 cursor-pointer text-sm"
+                            >
+                                {msg.content}
+                                <div className="text-xs text-gray-400">{new Date(msg.createdAt).toLocaleString()}</div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
-            </div>
-            {forwardMessage && (
-                <ForwardModal
-                    open={!!forwardMessage}
-                    messageToForward={forwardMessage} // chỉ 1 tin nhắn được chọn
-                    onClose={() => setForwardMessage(null)}
-                />
             )}
 
-
-
-            {showInfo && activeConversation && (
-                <ConversationInfoPanel
-                    key={activeConversation._id + activeConversation.updatedAt} // 🔥 ép render mới mỗi khi updatedAt thay đổi
-                    onClose={() => setShowInfo(false)}
-                    currentUserRole={role || "member"}
-                    conversation={activeConversation}
-                />
-            )}
-
-
-
-        </div>
+        </>
     );
 };
 
