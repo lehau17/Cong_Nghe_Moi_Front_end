@@ -1,11 +1,13 @@
+import { leaveGroup } from "@/apis/conversation-group.api";
 import { groupApi } from "@/apis/group.api";
 import Header from "@/components/shared/Header";
 import { SocketContext } from "@/context/SocketContext";
 import { useDeleteFriendShip } from "@/queries/friend.query";
 import { DashOutlined, ExclamationCircleOutlined, SearchOutlined } from "@ant-design/icons";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Dropdown, Input, Menu, message, Modal, Select } from "antd";
 import { useContext, useEffect, useState } from "react";
+import { toast } from "react-toastify";
 
 const GroupListPage = () => {
     // dùng để lưu nội dung search tìm kiếm
@@ -62,26 +64,27 @@ const GroupListPage = () => {
 
     // Handler actions
     const { confirm } = Modal;
+    const leaveGroupMutation = useMutation({
+        mutationFn: (groupId: string) => leaveGroup(groupId),
+        onSuccess: () => {
+            refetch()
+        },
+        onError: (error: any) => {
+            toast.error(error.response.data.message ?? "❌ Không thể rời khỏi nhóm");
+        },
+    });
 
 
     // các lựa chọn trong menu con
     // chọn caí nào thì xử lý cái đó
-    const handleMenuClick = (action: string, fs_id: string, friend_id?: string) => {
-        console.log(action, fs_id, friend_id)
-        // switch (action) {
-        //     case "view_info":
-        //         setUserSelect(friend_id!)
-        //         setOpenProfile(true)
-        //         break;
-        //     case "block_user":
-        //         console.log(`Chặn người dùng ID: ${fs_id}`);
-        //         break;
-        //     case "remove_friend":
-        //         showConfirmDelete(fs_id);
-        //         break;
-        //     default:
-        //         break;
-        // }
+    const handleMenuClick = (action: string, group_id: string) => {
+        switch (action) {
+            case "leave_group":
+                leaveGroupMutation.mutateAsync(group_id)
+                break;
+            default:
+                break;
+        }
     };
 
     // khi nhấn huyr kết bạn gọi hàm này
@@ -138,10 +141,8 @@ const GroupListPage = () => {
     // Hàm dùng để hiển thị Menu khi chọn vào ... bên danh sách bạn bè
     const renderMenu = (group_id: string) => (
         <Menu
-            onClick={(e) => handleMenuClick(e.key, group_id, "")}
+            onClick={(e) => handleMenuClick(e.key, group_id)}
             items={[
-                { label: "Xem thông tin nhóm", key: "view_info" },
-                { type: "divider" },
                 {
                     label: (
                         <span style={{ color: "red" }}>

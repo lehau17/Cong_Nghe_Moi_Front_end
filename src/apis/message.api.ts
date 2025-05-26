@@ -33,3 +33,8 @@ export const toggleEmojiApi = (messageId: string, typeEmoji: string) =>
 
 export const revokeEmojiApiAll = (messageId: string) =>
     http.delete(`/message/${messageId}/emoji-all`);
+
+
+export const removeAllMessageInConvrForme = (corv: string) => {
+    return http.patch(`/message/hide/${corv}`)
+}

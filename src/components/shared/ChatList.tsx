@@ -1,13 +1,16 @@
 import { getConversationDetailOrCreate, getMyConversations } from "@/apis/conversation.api";
-import { sendFriendRequest } from "@/apis/friend-request.api";
 import { groupApi } from "@/apis/group.api";
+import { removeAllMessageInConvrForme } from "@/apis/message.api";
 import { getUserProfile } from "@/apis/user.api";
 import { useChatContext } from "@/context/ChatContext";
 import { SocketContext } from "@/context/SocketContext";
 import { UserProfile } from "@/types/user.type";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
+import { useQuery } from "@tanstack/react-query";
+import { Modal } from "antd";
 import { useContext, useEffect, useState } from "react";
 import { FaUserFriends, FaUserPlus } from "react-icons/fa";
+import { IoMdMore } from "react-icons/io";
 import { IoClose } from "react-icons/io5";
 import { toast } from "react-toastify";
 import { useDebounce } from "react-use";
@@ -78,7 +81,7 @@ const ChatList = () => {
     // Lấy danh sách conversation
     // dùng tanstack query và axios
     // useQuery sẽ tự động chạy mỗi khi được gọi
-    const { data: conversations, isSuccess } = useQuery({
+    const { data: conversations, isSuccess, refetch: _ } = useQuery({
         queryKey: ["myConversations"],
         queryFn: getMyConversations,
     });
@@ -93,14 +96,14 @@ const ChatList = () => {
 
     // Hàm nayf dùng để gửi lời mời kết bạn
     // dùng tanstack query và axios
-    const sendFriendMutation = useMutation({
-        // gọi api
-        mutationFn: (toId: string) => sendFriendRequest(toId),
-        // Thành công : thông báo ra giao diện
-        onSuccess: () => toast.success("Gửi lời mời kết bạn thành công !"),
-        // Thất bại: thông báo ra giao diện
-        onError: () => toast.error("Gửi lời mời kết bạn thất bại"),
-    });
+    // const sendFriendMutation = useMutation({
+    //     // gọi api
+    //     mutationFn: (toId: string) => sendFriendRequest(toId),
+    //     // Thành công : thông báo ra giao diện
+    //     onSuccess: () => toast.success("Gửi lời mời kết bạn thành công !"),
+    //     // Thất bại: thông báo ra giao diện
+    //     onError: () => toast.error("Gửi lời mời kết bạn thất bại"),
+    // });
 
 
     const handleFocus = () => {
@@ -262,43 +265,89 @@ const ChatList = () => {
                         if (!displayName) return null;
 
                         return (
-                            <div
-                                key={conv._id}
-                                onClick={() =>
-                                    isGroup
-                                        ? handleSelectGroup(conv)
-                                        : handleSelectUser(otherUser as UserProfile, conv._id)
-                                }
-
-                                className={`flex items-center px-4 py-3 cursor-pointer ${isActive ? "bg-[#dbebff]" : "hover:bg-[#dbebff]"}`}
-                            >
-                                <div className="relative w-12 h-12">
-                                    <div className="w-12 h-12 rounded-full border-1 border-black bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-base overflow-hidden">
-                                        {displayAvatar ? (
-                                            <img src={displayAvatar} alt="Avatar" className="w-full h-full object-cover rounded-full" />
-                                        ) : (
-                                            displayName
-                                                ?.split(" ")
-                                                .map((w: string) => w[0])
-                                                .join("")
-                                                .slice(0, 2)
-                                                .toUpperCase()
-                                        )}
+                            <div className="relative group">
+                                {/* Conversation row */}
+                                <div
+                                    key={conv._id}
+                                    onClick={() =>
+                                        isGroup
+                                            ? handleSelectGroup(conv)
+                                            : handleSelectUser(otherUser as UserProfile, conv._id)
+                                    }
+                                    className={`flex items-center px-4 py-3 cursor-pointer ${isActive ? "bg-[#dbebff]" : "hover:bg-[#dbebff]"}`}
+                                >
+                                    {/* Avatar */}
+                                    <div className="relative w-12 h-12">
+                                        <div className="w-12 h-12 rounded-full border-1 border-black bg-gray-200 flex items-center justify-center text-gray-600 font-semibold text-base overflow-hidden">
+                                            {displayAvatar ? (
+                                                <img src={displayAvatar} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                                            ) : (
+                                                displayName
+                                                    ?.split(" ")
+                                                    .map((w: string) => w[0])
+                                                    .join("")
+                                                    .slice(0, 2)
+                                                    .toUpperCase()
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="flex-1 ml-3">
-                                    <div className="flex justify-between">
-                                        <span className="font-[480] text-[15px]">{displayName}</span>
+                                    {/* Info */}
+                                    <div className="flex-1 ml-3">
+                                        <div className="flex justify-between">
+                                            <span className="font-[480] text-[15px]">{displayName}</span>
+                                        </div>
+                                        <p className="text-sm text-gray-500 text-start">
+                                            {conv.lastMessage?.sender?.label} :{" "}
+                                            {conv.lastMessage?.type !== "text" ? `[${conv.lastMessage?.type}]` : (
+                                                <span>{conv.lastMessage?.content || "Chưa có tin nhắn"}</span>
+                                            )}
+                                        </p>
                                     </div>
-                                    <p className="text-sm text-gray-500 text-start">
-                                        {conv.lastMessage?.sender?.label} :{""}
-                                        {conv.lastMessage?.type !== "text" ? `[${conv.lastMessage?.type}]` : (
-                                            <span>{conv.lastMessage?.content || "Chưa có tin nhắn"}</span>
-                                        )}
-                                    </p>
+
+                                    {/* Dấu 3 chấm */}
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <button
+                                                className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <IoMdMore className="text-xl text-gray-600" />
+                                            </button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent
+                                            className="w-48 bg-white rounded-md shadow-lg border text-sm"
+                                            align="end"
+                                        >
+                                            <DropdownMenuItem
+                                                className="px-3 py-2 text-red-500 hover:bg-red-50 cursor-pointer"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    Modal.confirm({
+                                                        title: "Xác nhận xoá cuộc hội thoại",
+                                                        content: "Bạn có chắc chắn muốn xoá cuộc hội thoại này không? Hành động này không thể hoàn tác.",
+                                                        okText: "Xoá",
+                                                        okType: "danger",
+                                                        cancelText: "Huỷ",
+                                                        onOk: async () => {
+                                                            try {
+                                                                await removeAllMessageInConvrForme(conv._id);
+                                                                setConversationList(prev => prev.filter(e => e._id !== conv._id));
+                                                                toast.success("Đã xoá hội thoại khỏi danh sách của bạn");
+                                                            } catch (error) {
+                                                                toast.error("Lỗi xảy ra khi xoá hộp thoại");
+                                                            }
+                                                        },
+                                                    });
+                                                }}
+                                            >
+                                                Xoá hội thoại
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </div>
                             </div>
+
                         );
                     })
                 )}

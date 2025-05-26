@@ -19,6 +19,7 @@ const FriendListPage = () => {
     const [sortOrder, setSortOrder] = useState("A-Z");
     // tanstack query kết hợp axios để call api huỷ bạn bè
     const { mutate } = useDeleteFriendShip();
+    useEffect(() => { }, [])
     // socket IO
     const socket = useContext(SocketContext);
     // dùng để mở model profile.
@@ -117,7 +118,7 @@ const FriendListPage = () => {
         // khi socket nhận được sự kiện `delete-friendship`
         // call lại api bằng hàm refetch
         // hàm này có tác dụng call laị api
-        socket.on("delete-friendship", (_: string) => {
+        socket.on("friend-removed", (_: string) => {
             refetch();
         });
 
@@ -125,7 +126,7 @@ const FriendListPage = () => {
         // hàm này là hàm clean.
         // có nghĩa là nếu thoát khỏi giao diện này cần huỷ hứng sự kiện
         return () => {
-            socket.off("delete-friendship");
+            socket.off("friend-removed");
         };
     }, [socket, refetch]);
 
