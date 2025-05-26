@@ -10,7 +10,6 @@ import { agoraService } from "@/services/agoraService";
 import { UserProfile } from "@/types/user.type";
 import {
     AudioOutlined,
-    DeleteOutlined,
     MoreOutlined, PaperClipOutlined, PictureOutlined, SendOutlined, ShareAltOutlined, SmileOutlined,
     UndoOutlined
 } from "@ant-design/icons";
@@ -19,7 +18,7 @@ import { Avatar, Button, Dropdown, Input, Menu, Tooltip } from "antd";
 import EmojiPicker from "emoji-picker-react";
 import { Reply } from "lucide-react";
 import { forwardRef, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { IoCallOutline, IoSearchOutline, IoVideocamOutline } from "react-icons/io5";
+import { IoCallOutline, IoSearchOutline } from "react-icons/io5";
 import { toast } from "react-toastify";
 import { useClickAway } from "react-use";
 import ConversationInfoPanel from "./ConversationInfoPanel";
@@ -103,12 +102,7 @@ const MessageItem = forwardRef(({
                 {
                     type: "divider",
                 },
-                {
-                    key: "removeOne",
-                    icon: <DeleteOutlined className="text-red-500" />,
-                    label: <span className="text-sm text-red-600 font-medium">Xoá tin nhắn</span>,
-                    onClick: () => recallMutation.mutate()
-                }
+
             ]}
         />
     );
@@ -119,12 +113,7 @@ const MessageItem = forwardRef(({
             style={{ minWidth: 180 }}
             items={[
 
-                {
-                    key: "removeOne",
-                    icon: <DeleteOutlined className="text-red-500" />,
-                    label: <span className="text-sm text-red-600 font-medium">Xoá tin nhắn</span>,
-                    onClick: () => recallMutation.mutate()
-                }
+
             ]}
         />
     );
@@ -706,7 +695,6 @@ const ChatWindow = () => {
                     </div>
                     <div className="flex items-center space-x-4 text-xl text-gray-600">
                         <IoCallOutline className="cursor-pointer" onClick={handleStartCall} />
-                        <IoVideocamOutline className="cursor-pointer" />
                         <IoSearchOutline className="cursor-pointer" onClick={() => setShowSearchModal(true)} />
 
                         <MoreOutlined className="cursor-pointer" onClick={() => setShowInfo(!showInfo)} />
