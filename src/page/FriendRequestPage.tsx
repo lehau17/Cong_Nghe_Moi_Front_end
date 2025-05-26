@@ -6,11 +6,18 @@ import { Avatar, Spin } from "antd";
 import dayjs from "dayjs";
 import { useState } from "react";
 
+// Trang này dùng để hiện thị danh sách lời mời kết bạn gửi đến mình
 const FriendRequestPage = () => {
+    // Trang thái loading khi gọi api
+    // tránh để ngươì dùng spam api
     const [loadingId, setLoadingId] = useState<string | null>(null); // ID của request đang gọi API
+    // Hàm lấy danh sách lời mời kết bạn được gửi đến mính
+    // Dùng tanstack query với axios
     const { data, isLoading, refetch } = usePendingFriendRequests();
 
-    // Mutation với callback khi thành công sẽ gọi lại API để refresh
+    // Ham chấp nhập lời mời kết bạn
+    // Dùng tanstack query với axios
+    // cần id của cái lời mời kết bạn để chấp nhận
     const acceptMutation = useAcceptFriendRequest({
         onMutate: (id) => setLoadingId(id), // Bắt đầu gọi API thì set loading
         onSuccess: () => {
@@ -20,6 +27,9 @@ const FriendRequestPage = () => {
         onError: () => setLoadingId(null), // Xóa loading nếu lỗi
     });
 
+    // Hàm từ chối lời mời kết bạn
+    // Dùng tanstack query với axios
+    // cần id của cái lời mời kết bạn để chấp nhận
     const rejectMutation = useRejectFriendRequest({
         onMutate: (id) => setLoadingId(id),
         onSuccess: () => {
@@ -29,11 +39,12 @@ const FriendRequestPage = () => {
         onError: () => setLoadingId(null),
     });
 
-    // Hàm xử lý Accept/Reject
+    // Hàm xử lý nếu nhấn nút chấp nhận lời mời kết bạn
     const handleAccept = (id: string) => {
         acceptMutation.mutate(id);
     };
 
+    // Hàm xử lý nếu nhấn nút từ chối lời mời kết bạn
     const handleReject = (id: string) => {
         rejectMutation.mutate(id);
     };
@@ -42,11 +53,14 @@ const FriendRequestPage = () => {
         <div className="flex flex-col h-screen bg-gray-100">
             <Header title="Lời mời kết bạn" />
             <div className="m-3 bg-white rounded-lg shadow p-4 space-y-4">
+                {/* Nếu api đang call có nghĩa là đang loading thì nó hiện chỗ này */}
                 {isLoading ? (
                     <div className="flex justify-center items-center h-40">
                         <Spin tip="Đang tải lời mời kết bạn..." />
                     </div>
                 ) : (
+                    // Nếu đã call API thành công thì hiện chỗ này
+                    // data dạng mảng nêu cần quét qua mangr bằng map để hiện thị
                     data?.data.data.map((req) => (
                         <div
                             key={req._id}
@@ -64,6 +78,7 @@ const FriendRequestPage = () => {
                                 </div>
                             </div>
                             <div className="flex gap-2">
+                                {/* Nút chấp nhận lời mời kết bạn */}
                                 <Button
                                     size="sm"
                                     className="bg-green-500 hover:bg-green-600 text-white"
@@ -76,7 +91,7 @@ const FriendRequestPage = () => {
                                         <CheckOutlined />
                                     )}
                                 </Button>
-
+                                {/* Nút huỷ lời mời kết bạn */}
                                 <Button
                                     size="sm"
                                     className="bg-red-500 hover:bg-red-600 text-white"
