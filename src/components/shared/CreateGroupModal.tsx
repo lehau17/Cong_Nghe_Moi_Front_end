@@ -61,7 +61,7 @@ export default function CreateGroupModal({ open, onClose }: { open: boolean, onC
         createGroupMutation.mutate({
             name: groupName,
             members: selected,
-            avatar: groupAvatar
+            avatar: groupAvatar as string
         });
     };
 
