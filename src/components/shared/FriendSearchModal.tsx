@@ -79,7 +79,7 @@ export default function FriendSearchModal({ open, onClose, onSelectUser }: Props
 
 
     const renderActionButton = () => {
-        if (!user || !user.rs_id) return null;
+        if (!user) return null;
 
         if (user.relationship === "accepted") {
             return (
@@ -91,7 +91,6 @@ export default function FriendSearchModal({ open, onClose, onSelectUser }: Props
 
         if (user.relationship === "pending") {
             if (user.isSender) {
-                // ✅ Mình là người gửi → Huỷ lời mời
                 return (
                     <Button
                         variant="outline"
@@ -103,7 +102,6 @@ export default function FriendSearchModal({ open, onClose, onSelectUser }: Props
                     </Button>
                 );
             } else {
-                // ✅ Mình là người nhận → Chấp nhận / Từ chối
                 return (
                     <div className="flex gap-2">
                         <Button
@@ -127,7 +125,7 @@ export default function FriendSearchModal({ open, onClose, onSelectUser }: Props
             }
         }
 
-        // ✅ Chưa có quan hệ → Gửi lời mời
+        // ✅ Nếu chưa có quan hệ
         return (
             <Button
                 variant="outline"
@@ -139,6 +137,7 @@ export default function FriendSearchModal({ open, onClose, onSelectUser }: Props
             </Button>
         );
     };
+
 
 
     return (
